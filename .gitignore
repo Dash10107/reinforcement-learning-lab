@@ -1,0 +1,81 @@
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Environment variable files
+.env
+.env.local
+.env.*.local
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Trained model files (large binaries — tracked via Git LFS per-project)
+*.zip
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.bin
+*.onnx
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+*.ipynb
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# Coverage and test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Gradio temporary files
+gradio_cached_examples/
+flagged/
+
+# Checkpoints and run artifacts (keep structure, ignore contents)
+checkpoints/
+runs/
+wandb/
+mlruns/
+
+# Data files (download scripts are included, raw data is not)
+data/
+datasets/
+*.csv
+*.parquet
+*.h5
+*.hdf5
+
+# GIF replays generated at runtime
+*.gif
