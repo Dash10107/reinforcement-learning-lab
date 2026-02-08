@@ -1,0 +1,7 @@
+
+gradio
+numpy
+gymnasium
+matplotlib
+seaborn
+pandas
