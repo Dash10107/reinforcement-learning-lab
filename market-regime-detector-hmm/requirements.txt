@@ -1,0 +1,7 @@
+gradio
+yfinance
+hmmlearn
+scikit-learn
+pandas
+numpy
+matplotlib
