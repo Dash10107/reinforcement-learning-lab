@@ -1,0 +1,6 @@
+gradio>=6.0.0
+gymnasium
+numpy
+matplotlib
+stable-baselines3
+shimmy
