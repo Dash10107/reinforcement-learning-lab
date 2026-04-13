@@ -1,0 +1,8 @@
+pettingzoo
+mpe2
+gradio
+torch
+numpy<2.0,>=1.26.0
+pygame
+PILLOW
+matplotlib
