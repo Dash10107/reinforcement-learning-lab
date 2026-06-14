@@ -43,7 +43,7 @@ jobs:
     - name: Run Ruff Lint Check
       run: |
         mapfile -d '' changed_files < <(
-          git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '*.py'
+          git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '**/*.py'
         )
         if [ "${#changed_files[@]}" -gt 0 ]; then
           ruff check "${changed_files[@]}"
@@ -54,7 +54,7 @@ jobs:
     - name: Run Ruff Format Check
       run: |
         mapfile -d '' changed_files < <(
-          git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '*.py'
+          git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '**/*.py'
         )
         if [ "${#changed_files[@]}" -gt 0 ]; then
           ruff format --check "${changed_files[@]}"
