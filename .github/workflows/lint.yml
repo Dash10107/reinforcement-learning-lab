@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -20,8 +22,42 @@ jobs:
     - name: Install Ruff
       run: pip install ruff
 
+    - name: Collect changed Python files
+      id: changed_python
+      shell: bash
+      run: |
+        zero_sha="0000000000000000000000000000000000000000"
+
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          base_sha="${{ github.event.pull_request.base.sha }}"
+        else
+          base_sha="${{ github.event.before }}"
+        fi
+
+        if [ -z "$base_sha" ] || [ "$base_sha" = "$zero_sha" ] || ! git cat-file -e "$base_sha^{commit}" 2>/dev/null; then
+          base_sha="$(git rev-list --max-parents=0 HEAD)"
+        fi
+
+        echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+
     - name: Run Ruff Lint Check
-      run: ruff check .
+      run: |
+        mapfile -d '' changed_files < <(
+          git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '*.py'
+        )
+        if [ "${#changed_files[@]}" -gt 0 ]; then
+          ruff check "${changed_files[@]}"
+        else
+          echo "No changed Python files to lint."
+        fi
 
     - name: Run Ruff Format Check
-      run: ruff format --check .
+      run: |
+        mapfile -d '' changed_files < <(
+          git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '*.py'
+        )
+        if [ "${#changed_files[@]}" -gt 0 ]; then
+          ruff format --check "${changed_files[@]}"
+        else
+          echo "No changed Python files to format-check."
+        fi
