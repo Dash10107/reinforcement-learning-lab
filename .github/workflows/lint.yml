@@ -47,6 +47,8 @@ jobs:
         )
         if [ "${#changed_files[@]}" -gt 0 ]; then
           ruff check "${changed_files[@]}"
+        else
+          echo "No changed Python files to lint."
         fi
 
     - name: Run Ruff Format Check
@@ -56,4 +58,6 @@ jobs:
         )
         if [ "${#changed_files[@]}" -gt 0 ]; then
           ruff format --check "${changed_files[@]}"
+        else
+          echo "No changed Python files to format-check."
         fi
