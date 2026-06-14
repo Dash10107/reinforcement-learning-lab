@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -20,8 +22,27 @@ jobs:
     - name: Install Ruff
       run: pip install ruff
 
+    - name: Collect changed Python files
+      id: changed_python
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          base_sha="${{ github.event.pull_request.base.sha }}"
+        else
+          base_sha="${{ github.event.before }}"
+        fi
+
+        files="$(git diff --name-only "$base_sha" "${{ github.sha }}" -- '*.py')"
+        {
+          echo "files<<EOF"
+          echo "$files"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Run Ruff Lint Check
-      run: ruff check .
+      if: steps.changed_python.outputs.files != ''
+      run: ruff check ${{ steps.changed_python.outputs.files }}
 
     - name: Run Ruff Format Check
-      run: ruff format --check .
+      if: steps.changed_python.outputs.files != ''
+      run: ruff format --check ${{ steps.changed_python.outputs.files }}
