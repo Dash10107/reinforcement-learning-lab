@@ -1,198 +1,428 @@
----
-title: Swarm Architect Marl
-emoji: 🤖
-colorFrom: pink
-colorTo: red
-sdk: gradio
-sdk_version: 6.12.0
-app_file: app.py
-pinned: false
----
+<p align="center">
+  <img src="assets/banner.png" alt="Reinforcement Learning Portfolio Banner" width="900" />
+</p>
 
-# Swarm Architect — Multi-Agent Cooperative Control with IPPO
+<p align="center">
+  <a href="https://github.com/Dash10107/rl-portfolio/actions/workflows/lint.yml"><img src="https://github.com/Dash10107/rl-portfolio/actions/workflows/lint.yml/badge.svg" alt="Lint Status" /></a>
+  <a href="https://huggingface.co/spaces/Dash10107"><img src="https://img.shields.io/badge/Hugging%20Face-Spaces-yellow?style=flat&logo=huggingface" alt="HuggingFace Spaces" /></a>
+  <a href="https://colab.research.google.com/github/Dash10107/rl-portfolio/blob/main/open_in_colab.ipynb"><img src="https://img.shields.io/badge/Colab-Open-orange?style=flat&logo=googlecolab&logoColor=white" alt="Open in Colab" /></a>
+  <a href="https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Dash10107/rl-portfolio"><img src="https://img.shields.io/badge/Codespaces-Open-blue?style=flat&logo=github&logoColor=white" alt="Open in Codespaces" /></a>
+  <a href="https://github.com/Dash10107/rl-portfolio/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat" alt="License" /></a>
+  <a href="https://github.com/Dash10107/rl-portfolio/stargazers"><img src="https://img.shields.io/badge/stars-%E2%98%85%20welcome-brightgreen?style=flat" alt="GitHub stars" /></a>
+  <a href="https://github.com/Dash10107/rl-portfolio/issues"><img src="https://img.shields.io/badge/issues-welcome-brightgreen?style=flat" alt="GitHub issues" /></a>
+</p>
 
-A multi-agent reinforcement learning system where five agents learn to coordinate and spread across a shared space to cover as many landmarks as possible. Each agent is trained independently using PPO and must figure out through experience alone how to claim a different landmark without colliding with its teammates. You can train the agents, watch them run, evaluate their performance, and explore the algorithm in detail.
+# Reinforcement Learning Portfolio
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/swarm-architect-marl)
+A collection of 12 end-to-end reinforcement learning projects, each deployed as an interactive web application on Hugging Face Spaces. The projects span the full range of modern RL — from the simplest tabular methods that fit on a single page, to multi-agent coordination, model-based planning, and learning from human feedback.
 
----
+Every project is built to be understood by someone who is new to RL. Each has its own README explaining the algorithm, the environment, and what you are looking at when you run it.
 
-## What problem does this solve?
+**New to reinforcement learning?** Start with these two documents before anything else:
 
-Imagine five people trying to stand on five different marked spots on a floor, but they cannot communicate and cannot see the full picture — only their immediate surroundings. If they all rush toward the same spot, most of them miss. The optimal strategy requires each person to implicitly understand that others are heading somewhere and choose a different target.
-
-This is a cooperative coverage problem. It appears in real applications: teams of drones covering a disaster area for search and rescue, sensor networks that need to spread to provide full coverage, or autonomous vehicles positioning themselves to monitor intersections.
-
-The challenge for RL is that what one agent does changes what the others should do. This interdependency makes the learning problem much harder than single-agent RL.
+- [CONCEPTS.md](./CONCEPTS.md) — what RL is, the core vocabulary, and how all 12 algorithms relate to each other
+- [GETTING_STARTED.md](./GETTING_STARTED.md) — step-by-step guide to running your first project and your first experiment
 
 ---
 
-## The Task: Simple Spread
+## Key Highlights
 
-The environment is the Simple Spread cooperative task from PettingZoo's Multi-Particle Environment suite. Five agents and five landmarks are placed in a continuous 2D space. The team earns a negative reward for each landmark that is not covered by at least one agent, and an additional penalty for agent-agent collisions.
-
-The optimal strategy is for each agent to claim one distinct landmark and hold it. Getting there requires the agents to implicitly divide the landmarks among themselves without any direct communication — just by observing each other's positions and learning from shared reward signals.
-
----
-
-## The Algorithm: Independent PPO (IPPO)
-
-IPPO treats each agent as if it were the only agent in the world. Each of the five agents maintains its own Actor and Critic networks and trains on its own experience. There is no shared policy, no centralised critic, and no explicit communication between agents.
-
-**The Actor** for each agent outputs a categorical probability distribution over five discrete actions: no movement, up, down, left, right. During training it samples from this distribution for exploration. During evaluation it picks the highest-probability action greedily.
-
-**The Critic** estimates the value of the agent's current state — how much cumulative reward it expects to receive from here. This value estimate is used to compute advantages via Generalised Advantage Estimation (GAE):
-
-```
-delta_t = reward_t + gamma * V(next_state) - V(current_state)
-
-advantage_t = delta_t + (gamma * lambda) * advantage_(t+1)
-```
-
-GAE with lambda near 1 produces low-bias, higher-variance advantage estimates. Lambda near 0 produces high-bias, low-variance estimates that rely more on the critic. The default lambda of 0.95 balances these.
-
-**The PPO update** clips the ratio between the new and old policy to prevent large destabilising updates:
-
-```
-ratio = new_policy(action | state) / old_policy(action | state)
-
-actor_loss = -min(ratio * advantage, clip(ratio, 1-0.2, 1+0.2) * advantage)
-```
-
-This clipping is the key PPO innovation. It means the gradient is ignored whenever the policy update would move the ratio outside the (0.8, 1.2) range, keeping each step small and stable.
-
-**Entropy regularisation** adds a bonus for policies that are not too certain. An entropy coefficient of 0.01 discourages the agent from committing to one action too early in training, maintaining exploration throughout.
-
-**Why does independent learning work here?** Simple Spread has a shared reward, partial observability, and no adversarial agents. From each agent's perspective the environment is relatively stationary (other agents are slow to change their policies), which is the condition IPPO needs to converge. In adversarial or highly competitive environments IPPO breaks down, but for cooperative coverage tasks it works well.
+*   ⚡ **Zero-Install Interactive Demos**: Every project is deployed live on Hugging Face Spaces for instant testing.
+*   🎓 **Curriculum-Based Learning Path**: 12 modular projects spanning tabular methods, deep RL, policy gradients, multi-agent coordination, model-based planning, and alignment.
+*   🛠️ **Production-Grade UI**: Built-in training labs, parameter tuning sliders, real-time convergence charts, and policy heatmaps.
+*   📦 **One-Click Cloud Development**: Pre-configured GitHub Codespaces and Google Colab environments to write and run code instantly in your browser.
 
 ---
 
-## The Environment Details
+## System Architecture
 
-The environment is a continuous 2D world with no walls.
+All projects in this repository separate algorithm design, user interaction, environment dynamics, and remote registry hosting:
 
-**Observation per agent (30-dimensional):** Each agent sees its own position and velocity, the relative positions and velocities of all four other agents, and the positions of all five landmarks. This gives 30 numbers in total, all in a continuous range.
-
-**Action space:** 5 discrete actions — no-op, move up, move down, move left, move right.
-
-**Reward structure:**
-
-```
-team_penalty = -(number of landmarks not covered by any agent)
-collision_penalty = -(number of agent-agent collisions) * local_ratio
-```
-
-The local_ratio of 0.5 means half the reward comes from the global coverage score and half from avoiding local collisions. This balance encourages both good global coordination and respectful local behaviour.
-
-**Episode length:** 50 steps maximum per episode.
-
----
-
-## Project Structure
-
-```
-swarm-architect-marl/
-├── app.py                    main Gradio application
-├── config.py                 EnvConfig, NetworkConfig, PPOConfig, TrainConfig
-├── train.py                  standalone CLI training script
-├── agents/
-│   ├── networks.py           Actor and Critic network architectures
-│   ├── buffer.py             rollout buffer with GAE computation
-│   └── ippo.py               IPPOAgent, IPPOTrainer, training loop
-├── environment/
-│   └── wrapper.py            PettingZoo environment factory
-├── evaluation/
-│   └── metrics.py            TrainingLog and evaluate_agents utilities
-└── visualization/
-    └── animator.py           episode GIF export and training plots
+```mermaid
+graph TD
+    User([User]) <--> |Interacts / Views| UI[Gradio Web UI Dashboard]
+    UI <--> |Hyperparameters / Triggers Training| Agent[PyTorch / Tabular Agent]
+    Agent <--> |State / Action / Reward| Env[Gymnasium Environment]
+    Agent --> |Sync / Load weights| HF[Hugging Face Spaces Hub]
+    
+    style User fill:#0d1117,stroke:#30363d,stroke-width:2px,color:#c9d1d9
+    style UI fill:#1f6feb,stroke:#58a6ff,stroke-width:2px,color:#ffffff
+    style Agent fill:#8957e5,stroke:#bc8cff,stroke-width:2px,color:#ffffff
+    style Env fill:#238636,stroke:#3fb950,stroke-width:2px,color:#ffffff
+    style HF fill:#d29922,stroke:#f0883e,stroke-width:2px,color:#ffffff
 ```
 
 ---
 
-## Quick Setup
+## Featured Project Showcase
+
+Here are four representative projects showcasing tabular, continuous, multi-agent, and alignment paradigms:
+
+<table width="100%">
+  <tr>
+    <td width="50%" valign="top">
+      <h3 align="center">🤖 Tabular RL: Maze Solver</h3>
+      <a href="https://huggingface.co/spaces/Dash10107/rl_maze_solver">
+        <img src="assets/previews/maze_solver.png" width="100%" alt="Maze Solver Preview" style="border-radius: 8px;">
+      </a>
+      <p>Three classic tabular RL algorithms (Q-Learning, SARSA, and Monte Carlo) race to solve procedurally generated mazes. Features interactive convergence curves and real-time state-value (Q-value) heatmaps.</p>
+      <p align="center">
+        <a href="./rl_maze_solver"><b>📂 Code Directory</b></a> | 
+        <a href="https://huggingface.co/spaces/Dash10107/rl_maze_solver"><b>🚀 Live Space Demo</b></a>
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3 align="center">🚀 Deep Continuous: Rocket Lander</h3>
+      <a href="https://huggingface.co/spaces/Dash10107/rocket-lander-sac">
+        <img src="assets/previews/rocket_lander.png" width="100%" alt="Rocket Lander Preview" style="border-radius: 8px;">
+      </a>
+      <p>A continuous throttle/gimbal rocket lander trained using Soft Actor-Critic (SAC). Features customizable wind/gravity parameters, telemetry gauges, flight trajectories, and browser-based fine-tuning.</p>
+      <p align="center">
+        <a href="./rocket-lander-sac"><b>📂 Code Directory</b></a> | 
+        <a href="https://huggingface.co/spaces/Dash10107/rocket-lander-sac"><b>🚀 Live Space Demo</b></a>
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3 align="center">📦 Multi-Agent RL: Warehouse Sim</h3>
+      <a href="https://huggingface.co/spaces/Dash10107/marl-warehouse-sim">
+        <img src="assets/previews/warehouse_robots.png" width="100%" alt="Warehouse Sim Preview" style="border-radius: 8px;">
+      </a>
+      <p>Robots coordinate package deliveries in a custom 12x12 grid using Independent PPO (IPPO). Evaluates coordination, collision avoidance, and pathfinding optimization in multi-agent environments.</p>
+      <p align="center">
+        <a href="./marl-warehouse-sim"><b>📂 Code Directory</b></a> | 
+        <a href="https://huggingface.co/spaces/Dash10107/marl-warehouse-sim"><b>🚀 Live Space Demo</b></a>
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3 align="center">🎨 Human Alignment: Calligrapher RLHF</h3>
+      <a href="https://huggingface.co/spaces/Dash10107/digital-calligrapher-rlhf">
+        <img src="assets/previews/digital_calligrapher.png" width="100%" alt="Calligrapher RLHF Preview" style="border-radius: 8px;">
+      </a>
+      <p>A Bradley-Terry pairwise preference model aligned using Reinforcement Learning from Human Feedback (RLHF). Learns aesthetic preference vectors to generate customized calligraphic strokes.</p>
+      <p align="center">
+        <a href="./digital-calligrapher-rlhf"><b>📂 Code Directory</b></a> | 
+        <a href="https://huggingface.co/spaces/Dash10107/digital-calligrapher-rlhf"><b>🚀 Live Space Demo</b></a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Interactive Curriculum Roadmap
+
+Our curriculum builds your reinforcement learning knowledge progressively across five key stages:
+
+```mermaid
+graph TD
+    subgraph Foundational [Level 1: Foundational Tabular RL]
+        MAB[MAB Banner Optimizer<br><i>6 Multi-Armed Bandits</i>]
+        Maze[RL Maze Solver<br><i>Q-Learning, SARSA, MC</i>]
+    end
+    subgraph DeepRL [Level 2: Deep Q-Networks]
+        Logistics[Green Logistics Optimizer<br><i>Deep Q-Network vs baselines</i>]
+        Grid[Smart Grid Energy Optimizer<br><i>DQN vs DP Optimal solver</i>]
+    end
+    subgraph PolicyGrad [Level 3: Policy Gradient Methods]
+        Tutor[AI Tutor A2C<br><i>Actor-Critic study scheduler</i>]
+        Lander[Rocket Lander SAC<br><i>Soft Actor-Critic continuous control</i>]
+    end
+    subgraph Coordination [Level 4: Coordination & Planning]
+        Swarm[Swarm Architect MARL<br><i>Cooperative Independent PPO</i>]
+        Warehouse[MARL Warehouse Sim<br><i>Collision-free Independent PPO</i>]
+        Pendulum[MBRL Pendulum Playground<br><i>Ensemble World Model + MPC</i>]
+    end
+    subgraph Advanced [Level 5: Alignment & Physics]
+        Calligrapher[Digital Calligrapher RLHF<br><i>Bradley-Terry preference model</i>]
+        Regime[Market Regime Detector<br><i>Gaussian HMM Finance regime</i>]
+        Huggy[Unity RL Huggy Demo<br><i>3D Physics continuous PPO</i>]
+    end
+    
+    Maze --> Logistics
+    MAB --> Tutor
+    Logistics --> Tutor
+    Grid --> Lander
+    Tutor --> Swarm
+    Lander --> Warehouse
+    Lander --> Pendulum
+    Swarm --> Calligrapher
+    Warehouse --> Calligrapher
+    Pendulum --> Calligrapher
+    Regime -.-> Grid
+    Huggy -.-> Lander
+    
+    style MAB fill:#1f6feb,stroke:#58a6ff,stroke-width:1px,color:#ffffff
+    style Maze fill:#1f6feb,stroke:#58a6ff,stroke-width:1px,color:#ffffff
+    style Logistics fill:#238636,stroke:#3fb950,stroke-width:1px,color:#ffffff
+    style Grid fill:#238636,stroke:#3fb950,stroke-width:1px,color:#ffffff
+    style Tutor fill:#8957e5,stroke:#bc8cff,stroke-width:1px,color:#ffffff
+    style Lander fill:#8957e5,stroke:#bc8cff,stroke-width:1px,color:#ffffff
+    style Swarm fill:#d29922,stroke:#f0883e,stroke-width:1px,color:#ffffff
+    style Warehouse fill:#d29922,stroke:#f0883e,stroke-width:1px,color:#ffffff
+    style Pendulum fill:#d29922,stroke:#f0883e,stroke-width:1px,color:#ffffff
+    style Calligrapher fill:#f85149,stroke:#ff7b72,stroke-width:1px,color:#ffffff
+    style Regime fill:#f85149,stroke:#ff7b72,stroke-width:1px,color:#ffffff
+    style Huggy fill:#f85149,stroke:#ff7b72,stroke-width:1px,color:#ffffff
+```
+
+---
+
+## Project Index & Summaries
+
+Explore all 12 projects in detail below:
+
+<details>
+<summary><b>1. AI Tutor A2C</b> (Actor-Critic subject study schedules)</summary>
+<br>
+
+An A2C agent that learns to recommend which subject a student should study next across five subjects (Mathematics, Physics, Literature, History, Computer Science). The environment models both learning gains and forgetting — ignoring a subject for too long causes it to decay. The agent must find a study schedule that keeps all subjects progressing toward mastery.
+
+**Algorithm:** Actor-Critic (A2C) — the actor outputs a probability over subjects, the critic estimates state value, and the advantage function tells the actor which choices were better than expected.
+
+[View project](./AI-Tutor-A2C) · [Live demo](https://huggingface.co/spaces/Dash10107/AI-Tutor-A2C)
+</details>
+
+<details>
+<summary><b>2. Digital Calligrapher RLHF</b> (Bradley-Terry alignment from votes)</summary>
+<br>
+
+A demonstration of Reinforcement Learning from Human Feedback. Two calligraphic brush strokes are shown side by side and you vote for the one that feels more elegant. A Bradley-Terry reward model updates after each vote, learning a 6-dimensional weight vector that represents your aesthetic preferences. After enough votes, a hill-climbing optimiser generates strokes that maximise your learned reward.
+
+**Algorithm:** RLHF with Bradley-Terry pairwise comparison model — the same technique used to align large language models with human values, applied to visual aesthetics.
+
+[View project](./digital-calligrapher-rlhf) · [Live demo](https://huggingface.co/spaces/Dash10107/digital-calligrapher-rlhf)
+</details>
+
+<details>
+<summary><b>3. Green Logistics Optimizer</b> (DQN vehicle routing in city grid)</summary>
+<br>
+
+A DQN agent navigates a city grid to make deliveries while minimising carbon emissions. High-congestion zones multiply fuel cost by 4x. The agent learns to route around them when the detour is worth it. Three strategies run on the same city: the DQN agent, a greedy heuristic that always moves toward the goal, and an A* shortest-path solver.
+
+**Algorithm:** Deep Q-Network (DQN) with experience replay and target network — the agent learns a Q-function mapping (position, congestion layout) to expected future reward for each direction.
+
+[View project](./green-logistics-optimizer) · [Live demo](https://huggingface.co/spaces/Dash10107/green-logistics-optimizer)
+</details>
+
+<details>
+<summary><b>4. MAB Banner Optimizer</b> (6 multi-armed bandit strategies)</summary>
+<br>
+
+Six multi-armed bandit algorithms compete on the same ad campaign: Epsilon-Greedy, Decaying Epsilon-Greedy, UCB1, Thompson Sampling, Gradient Bandit, and EXP3. Each algorithm sees the same banner impressions and tries to figure out which banner variant has the highest click-through rate. Their cumulative reward and regret curves are plotted side by side. A step-through learner mode lets you watch each algorithm make individual decisions.
+
+**Algorithms:** All six major bandit strategies — from the simplest (epsilon-greedy) to the Bayesian (Thompson Sampling) and the adversarial (EXP3).
+
+[View project](./mab-banner-optimizer) · [Live demo](https://huggingface.co/spaces/Dash10107/mab-banner-optimizer)
+</details>
+
+<details>
+<summary><b>5. Market Regime Detector HMM</b> (Gaussian HMM financial state estimation)</summary>
+<br>
+
+A Gaussian Hidden Markov Model identifies recurring market states in historical stock data: Bull (positive drift, low volatility), Neutral (mixed signals), Bear (negative drift), and Crisis (extreme volatility). The price chart is coloured by regime, the transition matrix shows how likely each regime is to follow each other, and a backtest compares a regime-switching trading strategy against buy-and-hold.
+
+**Algorithm:** Gaussian HMM trained via Baum-Welch EM, decoded via Viterbi. BIC model selection picks the optimal number of hidden states automatically.
+
+[View project](./market-regime-detector-hmm) · [Live demo](https://huggingface.co/spaces/Dash10107/market-regime-detector-hmm)
+</details>
+
+<details>
+<summary><b>6. MARL Warehouse Sim</b> (Coordinated Independent PPO package delivery)</summary>
+<br>
+
+A team of robots operates inside a custom 12x12 warehouse grid. Each robot picks up packages from loading zones and delivers them to drop-off zones. Robots trained with Independent PPO learn to spread across the warehouse and claim different tasks without colliding, rather than all clustering around the same pickup zone.
+
+**Algorithm:** Independent PPO (IPPO) — each robot maintains its own Actor-Critic pair with no shared parameters or centralised communication.
+
+[View project](./marl-warehouse-sim) · [Live demo](https://huggingface.co/spaces/Dash10107/marl-warehouse-sim)
+</details>
+
+<details>
+<summary><b>7. MBRL Pendulum Playground</b> (Model-Based RL ensemble + MPC planner)</summary>
+<br>
+
+A complete Model-Based RL system for the classic Pendulum control task. A neural ensemble of five dynamics models is trained on random exploration data, then used for planning via Random Shooting MPC: at each step, 512 random action sequences are rolled out in the learned model and the best one is selected. An imagination rollout visualiser shows how prediction error grows with horizon length — the central challenge of model-based planning.
+
+**Algorithm:** Ensemble dynamics model (bootstrap training, epistemic uncertainty via model disagreement) + Random Shooting MPC with discounted reward planning.
+
+[View project](./mbrl-pendulum-playground) · [Live demo](https://huggingface.co/spaces/Dash10107/mbrl-pendulum-playground)
+</details>
+
+<details>
+<summary><b>8. RL Maze Solver</b> (Tabular Q-Learning, SARSA, and Monte Carlo)</summary>
+<br>
+
+Three tabular RL algorithms are trained to navigate procedurally generated mazes: Q-Learning (off-policy TD), SARSA (on-policy TD), and First-Visit Monte Carlo. The playground tab shows the animated solution path and Q-value heatmap for any chosen algorithm. The algorithm race tab plots their convergence curves side by side on the same maze.
+
+**Algorithms:** Q-Learning, SARSA, and Monte Carlo — the three foundational methods from Sutton and Barto's RL textbook, all implemented from scratch using only NumPy.
+
+[View project](./rl_maze_solver) · [Live demo](https://huggingface.co/spaces/Dash10107/rl_maze_solver)
+</details>
+
+<details>
+<summary><b>9. Rocket Lander SAC</b> (Continuous Soft Actor-Critic throttle landing)</summary>
+<br>
+
+A Soft Actor-Critic agent controls two engine throttles to land a rocket on the LunarLander-v3 platform. SAC maximises both expected reward and policy entropy, which leads to natural, exploratory behaviour during training and robust performance at test time. The app shows animated episode replays with throttle overlays, flight trajectories, and full mission analytics. A fine-tuning lab lets you continue training the pre-trained model in the browser.
+
+**Algorithm:** SAC with dual critics, target networks, and automatic entropy tuning — one of the best off-policy algorithms for continuous control tasks.
+
+[View project](./rocket-lander-sac) · [Live demo](https://huggingface.co/spaces/Dash10107/rocket-lander-sac)
+</details>
+
+<details>
+<summary><b>10. Smart Grid Energy Optimizer</b> (Discrete DQN battery market management)</summary>
+<br>
+
+A DQN agent manages a battery energy storage system over a 24-hour electricity market cycle. It decides each hour whether to charge (buy electricity), discharge (sell or offset load), or hold. Solar generation and building load vary throughout the day. The agent is compared against a dynamic programming optimal solver (perfect foresight upper bound) and a price-threshold heuristic baseline.
+
+**Algorithm:** DQN for the learned policy; DP backward induction for the optimal solver; price-threshold rule for the heuristic baseline.
+
+[View project](./smart-grid-energy-optimizer) · [Live demo](https://huggingface.co/spaces/Dash10107/smart-grid-energy-optimizer)
+</details>
+
+<details>
+<summary><b>11. Swarm Architect MARL</b> (Independent PPO landmark coverage)</summary>
+<br>
+
+Five agents learn to cooperatively spread across a continuous 2D space to cover five landmarks. No agent is told which landmark to target — they must implicitly divide the landmarks among themselves through experience. The task comes from PettingZoo's Multi-Particle Environment suite and is a standard benchmark for cooperative multi-agent RL.
+
+**Algorithm:** Independent PPO (IPPO) — same algorithm as the Warehouse Sim but in a continuous action space with a different coordination challenge.
+
+[View project](./swarm-architect-marl) · [Live demo](https://huggingface.co/spaces/Dash10107/swarm-architect-marl)
+</details>
+
+<details>
+<summary><b>12. Unity RL Huggy Demo</b> (Unity ML-Agents PPO WebGL fetch simulation)</summary>
+<br>
+
+A pre-trained Unity ML-Agents character that learned to fetch a stick through millions of physics simulation steps. Huggy controls joint torques on a physically simulated dog body and must discover running, turning, and timing entirely from a sparse reward signal. The demo runs as a WebGL application in the browser.
+
+**Algorithm:** PPO via Unity ML-Agents — the same policy gradient algorithm used in several other projects, applied to a 3D continuous control problem.
+
+[View project](./Unity-RL-Huggy-Demo) · [Live demo](https://huggingface.co/spaces/Dash10107/Unity-RL-Huggy-Demo)
+</details>
+
+---
+
+## Getting Started
+
+### Run any project individually
+
+Each project has its own `requirements.txt` and can be run standalone:
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
-cd swarm-architect-marl
+cd rocket-lander-sac
 pip install -r requirements.txt
 python app.py
 ```
 
-Open `http://localhost:7860`.
+### Set up a shared environment for all projects
 
-**Suggested starting point:** Go to the Watch the Swarm tab and click Watch the Agents. You will see an animated GIF of a pre-trained episode with five coloured agents trying to cover five landmarks. Then go to Train Your Swarm and click Start Quick Training for a 200-episode run. After training finishes, go to Mission Report and click Refresh to see the reward and delivery curves.
+A root-level `requirements.txt` and setup script installs everything needed for all 11 projects into a single virtual environment:
 
-You can also run training from the command line for longer sessions:
+**On Windows (PowerShell):**
+
+```powershell
+.\setup_env.ps1
+```
+
+**On Mac or Linux:**
 
 ```bash
-python train.py --episodes 500
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then activate the environment before running any project:
+
+```powershell
+# Windows
+.venv\Scripts\activate
+
+# Mac / Linux
+source .venv/bin/activate
 ```
 
 ---
 
-## What each tab shows
+## Suggested Learning Order
 
-**The Mission:** An introduction to the task, how agents and landmarks work, and a step-by-step guide to using the app. Explains what RLHF is in plain terms without assuming prior knowledge.
+If you are new to reinforcement learning, this order builds understanding progressively:
 
-**Watch the Swarm:** Runs the current best policy for one episode and shows an animated GIF replay. A score card below shows the coordination grade (A through F), team reward, and number of steps.
+1. **RL Maze Solver** — Start here. Q-learning is the simplest RL algorithm. Watching the maze solve itself makes the core loop (act, observe, update) immediately visual and concrete.
 
-**Train Your Swarm:** One-click Quick Start training with recommended settings, or an expandable Advanced Settings section for configuring episodes, learning rate, discount factor, exploration decay, and rollout size. All slider labels use plain English descriptions rather than Greek letters.
+2. **MAB Banner Optimizer** — Multi-armed bandits are simpler than full RL (no state transitions). Understanding exploration vs exploitation here makes the rest of the portfolio easier to follow.
 
-**Mission Report:** After training, click Refresh to see three charts: team reward per episode, deliveries per episode, and collisions per episode. A formal evaluation section runs a configurable number of test episodes and shows a per-agent reward breakdown.
+3. **AI Tutor A2C** — Your first policy gradient algorithm. A2C adds the actor-critic architecture on top of the tabular intuition from the maze solver.
+
+4. **Rocket Lander SAC** — Continuous actions for the first time. SAC is more complex than A2C but the visual feedback of a landing rocket makes the learning progress tangible.
+
+5. **Green Logistics Optimizer** — DQN applied to a spatial planning problem. Good for understanding experience replay and how Q-networks generalise across states.
+
+6. **Smart Grid Energy Optimizer** — DQN in a real-world economic setting. Introduces the comparison between learned policy and optimal (DP) policy.
+
+7. **Swarm Architect MARL** — First multi-agent project. Independent learning on a cooperative task.
+
+8. **MARL Warehouse Sim** — Multi-agent with a richer task structure. Task assignment, collision avoidance, and throughput metrics.
+
+9. **MBRL Pendulum Playground** — The shift to model-based RL. Understanding world models, planning, and compounding prediction errors.
+
+10. **Market Regime Detector** — Statistical ML applied to RL's state estimation problem. Good bridge between classical ML and RL.
+
+11. **Digital Calligrapher RLHF** — RLHF connects RL to how modern AI systems are aligned with human preferences. A fitting endpoint.
 
 ---
 
-## Key hyperparameters
+## Tech Stack
 
-| Parameter | Value | Purpose |
-|---|---|---|
-| Learning rate (actor) | 3e-4 | How fast the policy updates |
-| Learning rate (critic) | 1e-3 | Critic updates faster for stable value estimates |
-| Gamma | 0.95 | Discount factor for future rewards |
-| GAE lambda | 0.95 | Advantage estimation bias-variance tradeoff |
-| Clip epsilon | 0.2 | Maximum allowed policy ratio change per update |
-| Entropy coefficient | 0.01 | Encourages exploration throughout training |
-| Rollout steps | 128 | Steps collected before each gradient update |
-| Batch size | 64 | Mini-batch size during PPO update epochs |
-| N epochs | 4 | Number of update passes per rollout batch |
+| Category | Libraries |
+|---|---|
+| RL algorithms | Stable-Baselines3, custom PyTorch implementations |
+| Environments | Gymnasium, PettingZoo, custom environments |
+| Statistical ML | hmmlearn, scikit-learn |
+| Financial data | yfinance |
+| Visualisation | matplotlib, PIL |
+| Web interface | Gradio |
+| Deep learning | PyTorch |
 
 ---
 
-## Requirements
+## Repository Structure
 
 ```
-gradio>=6.0.0
-torch
-numpy
-matplotlib
-mpe2
-pettingzoo
+ReinforcementLearning/
+├── .devcontainer/                  Codespaces container setup
+├── .github/
+│   ├── ISSUE_TEMPLATE/             Bug & Feature templates
+│   └── workflows/                  Ruff CI linting & HF Space syncing
+├── assets/                         Visual branding resources
+├── README.md                       This file
+├── LICENSE                         MIT License
+├── CONTRIBUTING.md                 Contribution guidelines
+├── CODE_OF_CONDUCT.md              Community code of conduct
+├── SECURITY.md                     Security policy
+├── SUPPORT.md                      Support guide
+├── open_in_colab.ipynb             Google Colab one-click launcher
+├── requirements.txt                Shared dependencies for all projects
+├── setup_env.ps1                   Windows PowerShell setup script
+├── .gitignore
+│
+├── AI-Tutor-A2C/
+├── digital-calligrapher-rlhf/
+├── green-logistics-optimizer/
+├── mab-banner-optimizer/
+├── market-regime-detector-hmm/
+├── marl-warehouse-sim/
+├── mbrl-pendulum-playground/
+├── rl_maze_solver/
+├── rocket-lander-sac/
+├── smart-grid-energy-optimizer/
+├── swarm-architect-marl/
+└── Unity-RL-Huggy-Demo/
 ```
 
----
-
-## Things to Try
-
-**1. Watch untrained agents before training anything.**
-Go to Watch the Swarm before any training. Agents move randomly and cluster together. After Quick Training (200 episodes) watch again. Even a short training run produces visible coordination improvement.
-
-**2. Run Quick Training three times and compare curves.**
-Each run starts with a different random initialisation. Reward curves will look different but should all trend upward. IPPO consistently improves despite stochasticity.
-
-**3. Find when coordination emerges in the reward curve.**
-Look at the Mission Report reward curve carefully. There is usually a slow improvement phase then a sharper jump. That transition is when emergent landmark claiming begins — typically around episodes 50 to 150.
-
-**4. Evaluate and check per-agent reward balance.**
-Run 3 test episodes in Mission Report. If all five agents earn similar rewards they are all contributing equally. If one earns much less, that agent may be consistently failing to hold its landmark.
-
-**5. Train with a high learning rate vs the default.**
-In Advanced Settings set learning rate to 1e-3 (default is 3e-4). Higher LR trains faster but less stably. Compare the reward curves at episode 200. This shows how sensitive IPPO is to this single hyperparameter.
-
----
-
-## Further Reading
-
-- Schulman et al., Proximal Policy Optimization Algorithms (2017) — the original PPO paper
-- Lowe et al., Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments (2017) — MADDPG paper which uses the same Simple Spread task
-- de Witt et al., Is Independent Learning All You Need in the StarCraft Multi-Agent Challenge? (2020) — empirical evidence for when IPPO works
-- Schulman et al., High-Dimensional Continuous Control Using Generalised Advantage Estimation (2016) — the GAE paper
+Each project directory contains its own `app.py`, `README.md`, `requirements.txt`, and module subdirectories.
