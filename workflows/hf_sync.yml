@@ -1,0 +1,77 @@
+name: Sync to Hugging Face Spaces
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Set up Git
+      run: |
+        git config --global user.email "dakshcjain@gmail.com"
+        git config --global user.name "Dash10107"
+
+    - name: Sync modified projects to HF Spaces
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        PROJECTS=(
+          "AI-Tutor-A2C"
+          "digital-calligrapher-rlhf"
+          "green-logistics-optimizer"
+          "mab-banner-optimizer"
+          "market-regime-detector-hmm"
+          "marl-warehouse-sim"
+          "mbrl-pendulum-playground"
+          "rl_maze_solver"
+          "rocket-lander-sac"
+          "smart-grid-energy-optimizer"
+          "swarm-architect-marl"
+          "Unity-RL-Huggy-Demo"
+        )
+
+        BEFORE_SHA="${{ github.event.before }}"
+        if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE_SHA" ]; then
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+        else
+          CHANGED_FILES=$(git diff --name-only $BEFORE_SHA ${{ github.sha }})
+        fi
+
+        echo "Changed files in this push:"
+        echo "$CHANGED_FILES"
+
+        for proj in "${PROJECTS[@]}"; do
+          if echo "$CHANGED_FILES" | grep -q "^$proj/"; then
+            echo "=================================================="
+            echo "🚀 Changes detected in $proj. Syncing to HF Space..."
+            echo "=================================================="
+            
+            TEMP_DIR=$(mktemp -d)
+            
+            # Copy all files from project folder to temp dir
+            rsync -av --exclude='.git' --exclude='__pycache__' --exclude='.venv' --exclude='checkpoints' --exclude='wandb' --exclude='runs' --exclude='*.pyc' --exclude='*.pyo' --exclude='*.pth' --exclude='*.zip' --exclude='*.pt' --exclude='*.pkl' --exclude='*.gif' "$proj/" "$TEMP_DIR/"
+            
+            cd "$TEMP_DIR"
+            git init
+            git checkout -b main
+            git add .
+            git commit -m "Auto-sync from GitHub commit ${{ github.sha }}
+
+Project: $proj"
+            
+            # Push to HF Space
+            git push --force "https://Dash10107:$HF_TOKEN@huggingface.co/spaces/Dash10107/$proj" main
+            
+            echo "✅ Successfully synced $proj to HF Spaces!"
+            cd -
+          else
+            echo "⏭️ No changes in $proj. Skipping."
+          fi
+        done
