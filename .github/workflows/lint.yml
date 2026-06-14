@@ -38,20 +38,14 @@ jobs:
           base_sha="$(git rev-list --max-parents=0 HEAD)"
         fi
 
-        file_list="$(mktemp)"
-        git diff -z --name-only "$base_sha" "${{ github.sha }}" -- '*.py' > "$file_list"
-
-        if [ -s "$file_list" ]; then
-          echo "has_files=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "has_files=false" >> "$GITHUB_OUTPUT"
-        fi
-        echo "file_list=$file_list" >> "$GITHUB_OUTPUT"
+        echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
 
     - name: Run Ruff Lint Check
-      if: steps.changed_python.outputs.has_files == 'true'
-      run: xargs -0 ruff check < "${{ steps.changed_python.outputs.file_list }}"
+      run: |
+        git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '*.py' \
+          | xargs -0 -r ruff check
 
     - name: Run Ruff Format Check
-      if: steps.changed_python.outputs.has_files == 'true'
-      run: xargs -0 ruff format --check < "${{ steps.changed_python.outputs.file_list }}"
+      run: |
+        git diff -z --name-only "${{ steps.changed_python.outputs.base_sha }}" "${{ github.sha }}" -- '*.py' \
+          | xargs -0 -r ruff format --check
