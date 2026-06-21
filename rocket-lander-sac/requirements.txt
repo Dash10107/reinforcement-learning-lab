@@ -2,4 +2,4 @@ stable-baselines3[extra]
 gymnasium[box2d]
 shimmy
 matplotlib
-gradio>=6.0.0
+gradio>=6.19.0
