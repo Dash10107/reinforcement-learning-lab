@@ -3,7 +3,7 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 
 const docsBase = "/reinforcement-learning-lab/";
 const siteUrl  = "https://dash10107.github.io/reinforcement-learning-lab";
-const githubRepoLink = "https://github.com/Dash10107/rl-portfolio";
+const githubRepoLink = "https://github.com/Dash10107/reinforcement-learning-lab";
 const huggingFaceLink = "https://huggingface.co/Dash10107";
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -274,7 +274,7 @@ export default withMermaid(
 
       footer: {
         message: "Released under the MIT License.",
-        copyright: "© 2025 Reinforcement Learning Lab · Built with ❤️ and PyTorch",
+        copyright: "© 2026 Reinforcement Learning Lab · Built with ❤️ and PyTorch",
       },
 
       editLink: {

@@ -12,16 +12,31 @@
   <a href="https://github.com/Dash10107/reinforcement-learning-lab/issues"><img src="https://img.shields.io/badge/issues-welcome-brightgreen?style=flat" alt="GitHub issues" /></a>
 </p>
 
-# Reinforcement Learning Portfolio
+# Reinforcement Learning Lab
 
-A collection of 12 end-to-end reinforcement learning projects, each deployed as an interactive web application on Hugging Face Spaces. The projects span the full range of modern RL — from the simplest tabular methods that fit on a single page, to multi-agent coordination, model-based planning, and learning from human feedback.
+Learn Reinforcement Learning by Building.
+
+An interactive reinforcement learning course and lab featuring 12 end-to-end projects, each deployed as a runnable web application on Hugging Face Spaces. The projects span the full range of modern RL — from the simplest tabular methods that fit on a single page, to multi-agent coordination, model-based planning, and learning from human feedback.
 
 Every project is built to be understood by someone who is new to RL. Each has its own README explaining the algorithm, the environment, and what you are looking at when you run it.
 
-**New to reinforcement learning?** Start with these two documents before anything else:
+---
 
-- [CONCEPTS.md](./CONCEPTS.md) — what RL is, the core vocabulary, and how all 12 algorithms relate to each other
-- [GETTING_STARTED.md](./GETTING_STARTED.md) — step-by-step guide to running your first project and your first experiment
+## Where to Start
+
+- **I am a beginner** → Start with [RL Maze Solver](./rl_maze_solver) (Q-Learning)
+- **I know basic RL** → Start with [Green Logistics Optimizer](./green-logistics-optimizer) (DQN)
+- **I want deep RL** → Start with [Rocket Lander SAC](./rocket-lander-sac) (Continuous Control)
+- **I want RLHF** → Start with [Digital Calligrapher RLHF](./digital-calligrapher-rlhf) (Alignment)
+- **I want multi-agent RL** → Start with [MARL Warehouse Sim](./marl-warehouse-sim) (IPPO)
+- **I just want the full course** → [Visit the Official Lab Website](https://dash10107.github.io/reinforcement-learning-lab/)
+
+---
+
+## Algorithms Covered
+
+Q-Learning, SARSA, Monte Carlo, Temporal Difference (TD) Learning, Deep Q-Network (DQN), Advantage Actor-Critic (A2C), Proximal Policy Optimization (PPO), Soft Actor-Critic (SAC), Independent PPO (IPPO), Model-Based RL (MBRL), and Reinforcement Learning from Human Feedback (RLHF).
+
 
 ---
 
@@ -349,33 +364,7 @@ source .venv/bin/activate
 
 ---
 
-## Suggested Learning Order
 
-If you are new to reinforcement learning, this order builds understanding progressively:
-
-1. **RL Maze Solver** — Start here. Q-learning is the simplest RL algorithm. Watching the maze solve itself makes the core loop (act, observe, update) immediately visual and concrete.
-
-2. **MAB Banner Optimizer** — Multi-armed bandits are simpler than full RL (no state transitions). Understanding exploration vs exploitation here makes the rest of the portfolio easier to follow.
-
-3. **AI Tutor A2C** — Your first policy gradient algorithm. A2C adds the actor-critic architecture on top of the tabular intuition from the maze solver.
-
-4. **Rocket Lander SAC** — Continuous actions for the first time. SAC is more complex than A2C but the visual feedback of a landing rocket makes the learning progress tangible.
-
-5. **Green Logistics Optimizer** — DQN applied to a spatial planning problem. Good for understanding experience replay and how Q-networks generalise across states.
-
-6. **Smart Grid Energy Optimizer** — DQN in a real-world economic setting. Introduces the comparison between learned policy and optimal (DP) policy.
-
-7. **Swarm Architect MARL** — First multi-agent project. Independent learning on a cooperative task.
-
-8. **MARL Warehouse Sim** — Multi-agent with a richer task structure. Task assignment, collision avoidance, and throughput metrics.
-
-9. **MBRL Pendulum Playground** — The shift to model-based RL. Understanding world models, planning, and compounding prediction errors.
-
-10. **Market Regime Detector** — Statistical ML applied to RL's state estimation problem. Good bridge between classical ML and RL.
-
-11. **Digital Calligrapher RLHF** — RLHF connects RL to how modern AI systems are aligned with human preferences. A fitting endpoint.
-
----
 
 ## Tech Stack
 
