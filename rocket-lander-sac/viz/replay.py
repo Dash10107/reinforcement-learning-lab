@@ -4,16 +4,17 @@ Adds HUD overlay (step, reward, throttle bars) using PIL drawing — no matplotl
 """
 
 from __future__ import annotations
+
 import tempfile
+
 import numpy as np
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
-
 from core.mission import EpisodeResult
 
-
 # ── HUD rendering ─────────────────────────────────────────────────────────────
+
 
 def _draw_hud(
     img: PIL.Image.Image,
@@ -32,7 +33,9 @@ def _draw_hud(
     # Step & reward text
     draw.text((6, 4), f"STEP {step:03d}", fill=(79, 179, 255), font=None)
     rcolor = (45, 219, 124) if cumulative_reward >= 0 else (255, 77, 109)
-    draw.text((W//2 - 40, 4), f"REWARD {cumulative_reward:+.1f}", fill=rcolor, font=None)
+    draw.text(
+        (W // 2 - 40, 4), f"REWARD {cumulative_reward:+.1f}", fill=rcolor, font=None
+    )
     draw.text((W - 80, 4), status, fill=(248, 166, 35), font=None)
 
     # Throttle bars at bottom
@@ -42,17 +45,14 @@ def _draw_hud(
     # Main engine bar (blue)
     bar_max = W // 2 - 20
     bar_w = int(abs(main_throttle) * bar_max)
-    draw.rectangle([(10, BAR_Y), (10 + bar_max, BAR_Y + BAR_H)],
-                   fill=(13, 37, 64))
-    draw.rectangle([(10, BAR_Y), (10 + bar_w, BAR_Y + BAR_H)],
-                   fill=(79, 179, 255))
+    draw.rectangle([(10, BAR_Y), (10 + bar_max, BAR_Y + BAR_H)], fill=(13, 37, 64))
+    draw.rectangle([(10, BAR_Y), (10 + bar_w, BAR_Y + BAR_H)], fill=(79, 179, 255))
     draw.text((10, BAR_Y - 11), "MAIN", fill=(79, 179, 255), font=None)
 
     # Lateral bar (amber)
     lx = W // 2 + 10
     lat_w = int(abs(lateral_throttle) * bar_max)
-    draw.rectangle([(lx, BAR_Y), (lx + bar_max, BAR_Y + BAR_H)],
-                   fill=(13, 37, 64))
+    draw.rectangle([(lx, BAR_Y), (lx + bar_max, BAR_Y + BAR_H)], fill=(13, 37, 64))
     col = (245, 166, 35) if lateral_throttle >= 0 else (255, 77, 109)
     draw.rectangle([(lx, BAR_Y), (lx + lat_w, BAR_Y + BAR_H)], fill=col)
     draw.text((lx, BAR_Y - 11), "LATERAL", fill=(245, 166, 35), font=None)
@@ -123,7 +123,7 @@ def make_comparison_gif(
         return ""
 
     h, w = padded[0][0].shape[:2]
-    cols = 2 if n > 2 else n
+    cols = min(n, 2)
     rows = (n + cols - 1) // cols
     grid_w, grid_h = cols * w, rows * h
 
@@ -140,9 +140,12 @@ def make_comparison_gif(
             ep = ep_list[ep_i]
             draw.rectangle([(0, 0), (cell.width, 16)], fill=(3, 11, 26))
             col = (45, 219, 124) if ep.total_reward >= 150 else (255, 77, 109)
-            draw.text((4, 2),
-                      f"#{ep.episode_idx+1} {ep.status} {ep.total_reward:+.0f}",
-                      fill=col, font=None)
+            draw.text(
+                (4, 2),
+                f"#{ep.episode_idx + 1} {ep.status} {ep.total_reward:+.0f}",
+                fill=col,
+                font=None,
+            )
             cx = (ep_i % cols) * w
             cy = (ep_i // cols) * h
             canvas.paste(cell, (cx, cy))

@@ -88,11 +88,11 @@ def n_step_return(rewards, V, next_state, gamma, n):
     """Compute n-step return from a list of rewards."""
     G = 0
     for i, r in enumerate(rewards[:n]):
-        G += (gamma ** i) * r
+        G += (gamma**i) * r
 
     # Bootstrap from the value at step n
     if len(rewards) >= n:
-        G += (gamma ** n) * V[next_state]
+        G += (gamma**n) * V[next_state]
 
     return G
 ```

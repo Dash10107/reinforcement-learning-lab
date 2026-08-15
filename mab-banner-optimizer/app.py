@@ -8,25 +8,33 @@ End-to-end Multi-Armed Bandit showcase:
 """
 
 from __future__ import annotations
-import json
-import gradio as gr
 
-from bandits.environment import CampaignEnvironment, BannerArm, SCENARIOS
-from bandits.agents import make_agent, AGENT_REGISTRY
+import json
+
+import gradio as gr
+from bandits.agents import AGENT_REGISTRY, make_agent
+from bandits.environment import SCENARIOS, BannerArm, CampaignEnvironment
 from bandits.simulator import run_comparison, run_single
 from viz.charts import (
-    comparison_dashboard, belief_chart, campaign_analytics,
-    scenario_preview, learner_step_chart, empty_fig,
+    belief_chart,
+    campaign_analytics,
+    comparison_dashboard,
+    empty_fig,
+    learner_step_chart,
+    scenario_preview,
 )
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _parse_arms(names_str: str, ctrs_str: str, revs_str: str) -> list[BannerArm]:
     names = [n.strip() for n in names_str.split(",") if n.strip()]
-    ctrs  = json.loads(ctrs_str)
-    revs  = json.loads(revs_str)
+    ctrs = json.loads(ctrs_str)
+    revs = json.loads(revs_str)
     if len(names) != len(ctrs) or len(names) != len(revs):
-        raise ValueError(f"Length mismatch: {len(names)} names, {len(ctrs)} CTRs, {len(revs)} revenues")
+        raise ValueError(
+            f"Length mismatch: {len(names)} names, {len(ctrs)} CTRs, {len(revs)} revenues"
+        )
     return [BannerArm(n, float(c), float(r)) for n, c, r in zip(names, ctrs, revs)]
 
 
@@ -36,21 +44,31 @@ def _arms_from_scenario(scenario_name: str) -> list[BannerArm]:
 
 def _agent_params(algo: str, eps: float, c: float, alpha: float, gamma: float) -> dict:
     return {
-        "Epsilon-Greedy":          {"epsilon": eps},
+        "Epsilon-Greedy": {"epsilon": eps},
         "Decaying Epsilon-Greedy": {"decay": 1.0},
-        "UCB1":             {"c": c},
-        "Gradient Bandit":  {"alpha": alpha},
-        "EXP3 (Adversarial)":{"gamma": gamma},
-        "Thompson Sampling":{},
+        "UCB1": {"c": c},
+        "Gradient Bandit": {"alpha": alpha},
+        "EXP3 (Adversarial)": {"gamma": gamma},
+        "Thompson Sampling": {},
     }.get(algo, {})
 
 
 # ── Tab 1: Algorithm Face-Off ─────────────────────────────────────────────────
 
+
 def cb_faceoff(
-    scenario_name, custom_names, custom_ctrs, custom_revs,
-    selected_algos, n_steps, drift, seed,
-    eps, c_val, alpha_val, gamma_val,
+    scenario_name,
+    custom_names,
+    custom_ctrs,
+    custom_revs,
+    selected_algos,
+    n_steps,
+    drift,
+    seed,
+    eps,
+    c_val,
+    alpha_val,
+    gamma_val,
     progress: gr.Progress = gr.Progress(),
 ):
     try:
@@ -62,13 +80,19 @@ def cb_faceoff(
         algos = selected_algos if selected_algos else ["Thompson Sampling"]
         progress(0.1, desc="Setting up environment…")
 
-        agent_params = {a: _agent_params(a, float(eps), float(c_val),
-                                          float(alpha_val), float(gamma_val))
-                        for a in algos}
+        agent_params = {
+            a: _agent_params(
+                a, float(eps), float(c_val), float(alpha_val), float(gamma_val)
+            )
+            for a in algos
+        }
 
         agents = run_comparison(
-            arms, algos, int(n_steps),
-            drift_std=float(drift), seed=int(seed),
+            arms,
+            algos,
+            int(n_steps),
+            drift_std=float(drift),
+            seed=int(seed),
             agent_params=agent_params,
         )
         progress(0.8, desc="Rendering comparison dashboard…")
@@ -77,24 +101,28 @@ def cb_faceoff(
         fig = comparison_dashboard(agents, [a.name for a in arms], env_probe.optimal_ev)
 
         best_algo = max(agents, key=lambda k: agents[k].total_reward)
-        best_rev  = agents[best_algo].total_reward
+        best_rev = agents[best_algo].total_reward
 
-        summary = f"""
+        summary = (
+            f"""
 ### Face-Off Complete — {len(algos)} algorithms · {int(n_steps):,} impressions
 
 | Algorithm | Revenue | Regret | Best Arm % |
 |---|---|---|---|
-""" + "\n".join(
-            f"| {'👑 ' if k==best_algo else ''}{k} | "
-            f"`${v.total_reward:,.2f}` | `${v.cumulative_regret:,.2f}` | "
-            f"`{v.arm_pull_pcts.max():.1f}%` |"
-            for k, v in agents.items()
-        ) + f"""
+"""
+            + "\n".join(
+                f"| {'👑 ' if k == best_algo else ''}{k} | "
+                f"`${v.total_reward:,.2f}` | `${v.cumulative_regret:,.2f}` | "
+                f"`{v.arm_pull_pcts.max():.1f}%` |"
+                for k, v in agents.items()
+            )
+            + f"""
 
 > **Winner:** {best_algo} with ${best_rev:,.2f} total revenue
 > **Optimal benchmark:** ${env_probe.optimal_ev * int(n_steps):,.2f}
 > **Efficiency:** {best_rev / (env_probe.optimal_ev * int(n_steps)) * 100:.1f}%
 """
+        )
         progress(1.0)
         return fig, summary
 
@@ -104,10 +132,20 @@ def cb_faceoff(
 
 # ── Tab 2: Campaign Deep-Dive ─────────────────────────────────────────────────
 
+
 def cb_deep_dive(
-    scenario_name, custom_names, custom_ctrs, custom_revs,
-    algo, n_steps, drift, seed,
-    eps, c_val, alpha_val, gamma_val,
+    scenario_name,
+    custom_names,
+    custom_ctrs,
+    custom_revs,
+    algo,
+    n_steps,
+    drift,
+    seed,
+    eps,
+    c_val,
+    alpha_val,
+    gamma_val,
     progress: gr.Progress = gr.Progress(),
 ):
     try:
@@ -117,21 +155,27 @@ def cb_deep_dive(
             arms = _arms_from_scenario(scenario_name)
 
         progress(0.1, desc=f"Running {algo}…")
-        params = _agent_params(algo, float(eps), float(c_val), float(alpha_val), float(gamma_val))
-        env    = CampaignEnvironment(arms, drift_std=float(drift), seed=int(seed))
-        agent  = make_agent(algo, len(arms), params)
+        params = _agent_params(
+            algo, float(eps), float(c_val), float(alpha_val), float(gamma_val)
+        )
+        env = CampaignEnvironment(arms, drift_std=float(drift), seed=int(seed))
+        agent = make_agent(algo, len(arms), params)
         run_single(env, agent, int(n_steps), seed=int(seed))
 
         progress(0.6, desc="Rendering analytics…")
         arm_names = [a.name for a in arms]
         true_ctrs = [a.true_ctr for a in arms]
-        revenues  = [a.revenue for a in arms]
+        revenues = [a.revenue for a in arms]
 
         analytics_fig = campaign_analytics(agent, arm_names, true_ctrs, revenues)
-        belief_fig    = belief_chart(agent, arm_names, true_ctrs, int(n_steps))
+        belief_fig = belief_chart(agent, arm_names, true_ctrs, int(n_steps))
 
         progress(1.0)
-        return analytics_fig, belief_fig, f"Deep-dive complete for **{algo}** on **{scenario_name}**"
+        return (
+            analytics_fig,
+            belief_fig,
+            f"Deep-dive complete for **{algo}** on **{scenario_name}**",
+        )
 
     except Exception as e:
         return empty_fig(f"Error: {e}"), empty_fig(""), f"❌ {e}"
@@ -139,28 +183,44 @@ def cb_deep_dive(
 
 # ── Tab 3: Learner Mode ───────────────────────────────────────────────────────
 
-def cb_learner_init(scenario_name, custom_names, custom_ctrs, custom_revs, algo,
-                    eps, c_val, alpha_val, gamma_val):
+
+def cb_learner_init(
+    scenario_name,
+    custom_names,
+    custom_ctrs,
+    custom_revs,
+    algo,
+    eps,
+    c_val,
+    alpha_val,
+    gamma_val,
+):
     try:
         if scenario_name == "🔬 Custom":
             arms = _parse_arms(custom_names, custom_ctrs, custom_revs)
         else:
             arms = _arms_from_scenario(scenario_name)
 
-        params = _agent_params(algo, float(eps), float(c_val), float(alpha_val), float(gamma_val))
-        env    = CampaignEnvironment(arms, drift_std=0.002, seed=42)
-        agent  = make_agent(algo, len(arms), params)
+        params = _agent_params(
+            algo, float(eps), float(c_val), float(alpha_val), float(gamma_val)
+        )
+        env = CampaignEnvironment(arms, drift_std=0.002, seed=42)
+        agent = make_agent(algo, len(arms), params)
         env.reset(seed=42)
 
         arm_names = [a.name for a in arms]
         true_ctrs = [a.true_ctr for a in arms]
-        revenues  = [a.revenue for a in arms]
+        revenues = [a.revenue for a in arms]
 
         fig = scenario_preview(arm_names, true_ctrs, revenues)
         status = f"✅ **{algo}** initialised on **{scenario_name}**. Click **Next Step** to begin."
 
-        return (env, agent, arm_names, true_ctrs, revenues, 0, -1, 0.0), \
-               fig, status, gr.update(interactive=True)
+        return (
+            (env, agent, arm_names, true_ctrs, revenues, 0, -1, 0.0),
+            fig,
+            status,
+            gr.update(interactive=True),
+        )
 
     except Exception as e:
         return None, empty_fig(f"Error: {e}"), f"❌ {e}", gr.update(interactive=False)
@@ -172,11 +232,11 @@ def cb_learner_step(state):
 
     env, agent, arm_names, true_ctrs, revenues, step, *_ = state
 
-    arm    = agent.choose()
+    arm = agent.choose()
     reward, converted = env.pull(arm)
     agent.update(arm, reward, converted, env.optimal_ev)
 
-    fig    = learner_step_chart(agent, arm_names, true_ctrs, revenues, arm, reward)
+    fig = learner_step_chart(agent, arm_names, true_ctrs, revenues, arm, reward)
     status = (
         f"**Step {agent.t}** · Chose: **{arm_names[arm]}** · "
         f"Reward: **${reward:.2f}** · Converted: {'✅' if converted else '❌'} · "
@@ -188,6 +248,7 @@ def cb_learner_step(state):
 
 # ── Tab 4: Scenario Builder ───────────────────────────────────────────────────
 
+
 def cb_preview_scenario(scenario_name, custom_names, custom_ctrs, custom_revs):
     try:
         if scenario_name == "🔬 Custom":
@@ -196,10 +257,10 @@ def cb_preview_scenario(scenario_name, custom_names, custom_ctrs, custom_revs):
             arms = _arms_from_scenario(scenario_name)
         arm_names = [a.name for a in arms]
         true_ctrs = [a.true_ctr for a in arms]
-        revenues  = [a.revenue for a in arms]
+        revenues = [a.revenue for a in arms]
         desc = SCENARIOS.get(scenario_name, {}).get("description", "Custom scenario")
-        fig  = scenario_preview(arm_names, true_ctrs, revenues)
-        info = f"**{scenario_name}** — {desc}\n\n**{len(arms)} banners** · Best EV: ${max(c*r for c,r in zip(true_ctrs,revenues)):.4f}/impression"
+        fig = scenario_preview(arm_names, true_ctrs, revenues)
+        info = f"**{scenario_name}** — {desc}\n\n**{len(arms)} banners** · Best EV: ${max(c * r for c, r in zip(true_ctrs, revenues)):.4f}/impression"
         return fig, info
     except Exception as e:
         return empty_fig(f"Error: {e}"), f"❌ {e}"
@@ -309,33 +370,33 @@ ALGO_NAMES = list(AGENT_REGISTRY.keys())
 SCENARIO_NAMES = list(SCENARIOS.keys())
 
 DEFAULT_NAMES = "Red Urgency, Blue Minimal, Green Social, Video Teaser"
-DEFAULT_CTRS  = "[0.04, 0.09, 0.06, 0.12]"
-DEFAULT_REVS  = "[45, 45, 45, 45]"
+DEFAULT_CTRS = "[0.04, 0.09, 0.06, 0.12]"
+DEFAULT_REVS = "[45, 45, 45, 45]"
 
 
 def _scenario_inputs():
-    scenario = gr.Dropdown(SCENARIO_NAMES, value="🛒 E-Commerce Sale",
-                           label="Scenario Preset")
+    scenario = gr.Dropdown(
+        SCENARIO_NAMES, value="🛒 E-Commerce Sale", label="Scenario Preset"
+    )
     with gr.Accordion("✏️ Custom Scenario", open=False):
         names = gr.Textbox(value=DEFAULT_NAMES, label="Banner Names (comma-sep)")
-        ctrs  = gr.Textbox(value=DEFAULT_CTRS,  label="True CTRs (JSON list)")
-        revs  = gr.Textbox(value=DEFAULT_REVS,  label="Revenues $ (JSON list)")
+        ctrs = gr.Textbox(value=DEFAULT_CTRS, label="True CTRs (JSON list)")
+        revs = gr.Textbox(value=DEFAULT_REVS, label="Revenues $ (JSON list)")
     return scenario, names, ctrs, revs
 
 
 def _algo_params():
     with gr.Accordion("⚙️ Algorithm Parameters", open=False):
-        eps   = gr.Slider(0.01, 0.5,  value=0.1,  step=0.01, label="ε (Epsilon-Greedy)")
-        c_val = gr.Slider(0.5,  5.0,  value=2.0,  step=0.5,  label="c (UCB1 confidence)")
-        alpha = gr.Slider(0.01, 1.0,  value=0.1,  step=0.01, label="α (Gradient Bandit)")
-        gamma = gr.Slider(0.01, 0.5,  value=0.1,  step=0.01, label="γ (EXP3)")
+        eps = gr.Slider(0.01, 0.5, value=0.1, step=0.01, label="ε (Epsilon-Greedy)")
+        c_val = gr.Slider(0.5, 5.0, value=2.0, step=0.5, label="c (UCB1 confidence)")
+        alpha = gr.Slider(0.01, 1.0, value=0.1, step=0.01, label="α (Gradient Bandit)")
+        gamma = gr.Slider(0.01, 0.5, value=0.1, step=0.01, label="γ (EXP3)")
     return eps, c_val, alpha, gamma
 
 
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="MAB Banner Optimizer") as demo:
-
     gr.HTML("""
     <div class="mab-header">
         <div class="mab-title">🎯 MAB BANNER OPTIMIZER</div>
@@ -354,7 +415,6 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
     """)
 
     with gr.Tabs():
-
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Algorithm Face-Off
         # ══════════════════════════════════════════════════════════════════
@@ -381,23 +441,42 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
                         value=["Thompson Sampling", "UCB1", "Epsilon-Greedy"],
                         label="Select Algorithms to Compare",
                     )
-                    fo_steps = gr.Slider(500, 20000, value=5000, step=500,
-                                         label="Impressions (steps)")
-                    fo_drift = gr.Slider(0, 0.01, value=0.002, step=0.001,
-                                         label="Market Drift (CTR noise/step)")
-                    fo_seed  = gr.Slider(0, 100, value=42, step=1, label="Random Seed")
+                    fo_steps = gr.Slider(
+                        500, 20000, value=5000, step=500, label="Impressions (steps)"
+                    )
+                    fo_drift = gr.Slider(
+                        0,
+                        0.01,
+                        value=0.002,
+                        step=0.001,
+                        label="Market Drift (CTR noise/step)",
+                    )
+                    fo_seed = gr.Slider(0, 100, value=42, step=1, label="Random Seed")
                     fo_eps, fo_c, fo_alpha, fo_gamma = _algo_params()
-                    btn_fo   = gr.Button("🏁 RUN FACE-OFF", variant="primary")
+                    btn_fo = gr.Button("🏁 RUN FACE-OFF", variant="primary")
 
                 with gr.Column(scale=2):
-                    fo_summary = gr.Markdown("*Select algorithms and click Run Face-Off.*")
+                    fo_summary = gr.Markdown(
+                        "*Select algorithms and click Run Face-Off.*"
+                    )
 
             fo_chart = gr.Plot(label="Algorithm Comparison Dashboard")
             btn_fo.click(
                 cb_faceoff,
-                [fo_scenario, fo_names, fo_ctrs, fo_revs,
-                 fo_algos, fo_steps, fo_drift, fo_seed,
-                 fo_eps, fo_c, fo_alpha, fo_gamma],
+                [
+                    fo_scenario,
+                    fo_names,
+                    fo_ctrs,
+                    fo_revs,
+                    fo_algos,
+                    fo_steps,
+                    fo_drift,
+                    fo_seed,
+                    fo_eps,
+                    fo_c,
+                    fo_alpha,
+                    fo_gamma,
+                ],
                 [fo_chart, fo_summary],
             )
 
@@ -421,15 +500,18 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
             with gr.Row():
                 with gr.Column(scale=1, min_width=300):
                     dd_scenario, dd_names, dd_ctrs, dd_revs = _scenario_inputs()
-                    dd_algo  = gr.Dropdown(ALGO_NAMES, value="Thompson Sampling",
-                                            label="Algorithm")
-                    dd_steps = gr.Slider(500, 20000, value=5000, step=500,
-                                          label="Impressions")
-                    dd_drift = gr.Slider(0, 0.01, value=0.002, step=0.001,
-                                          label="Market Drift")
-                    dd_seed  = gr.Slider(0, 100, value=42, step=1, label="Seed")
+                    dd_algo = gr.Dropdown(
+                        ALGO_NAMES, value="Thompson Sampling", label="Algorithm"
+                    )
+                    dd_steps = gr.Slider(
+                        500, 20000, value=5000, step=500, label="Impressions"
+                    )
+                    dd_drift = gr.Slider(
+                        0, 0.01, value=0.002, step=0.001, label="Market Drift"
+                    )
+                    dd_seed = gr.Slider(0, 100, value=42, step=1, label="Seed")
                     dd_eps, dd_c, dd_alpha, dd_gamma = _algo_params()
-                    btn_dd   = gr.Button("📊 RUN ANALYTICS", variant="primary")
+                    btn_dd = gr.Button("📊 RUN ANALYTICS", variant="primary")
 
                 with gr.Column(scale=2):
                     dd_status = gr.Markdown("*Run analytics to see deep-dive charts.*")
@@ -438,9 +520,20 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
             dd_chart = gr.Plot(label="Campaign Analytics Dashboard")
             btn_dd.click(
                 cb_deep_dive,
-                [dd_scenario, dd_names, dd_ctrs, dd_revs,
-                 dd_algo, dd_steps, dd_drift, dd_seed,
-                 dd_eps, dd_c, dd_alpha, dd_gamma],
+                [
+                    dd_scenario,
+                    dd_names,
+                    dd_ctrs,
+                    dd_revs,
+                    dd_algo,
+                    dd_steps,
+                    dd_drift,
+                    dd_seed,
+                    dd_eps,
+                    dd_c,
+                    dd_alpha,
+                    dd_gamma,
+                ],
                 [dd_chart, dd_belief, dd_status],
             )
 
@@ -466,14 +559,16 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
             with gr.Row():
                 with gr.Column(scale=1, min_width=280):
                     lm_scenario, lm_names, lm_ctrs, lm_revs = _scenario_inputs()
-                    lm_algo = gr.Dropdown(ALGO_NAMES, value="Thompson Sampling",
-                                           label="Algorithm")
+                    lm_algo = gr.Dropdown(
+                        ALGO_NAMES, value="Thompson Sampling", label="Algorithm"
+                    )
                     lm_eps, lm_c, lm_alpha, lm_gamma = _algo_params()
 
                     with gr.Row():
                         btn_lm_init = gr.Button("⚡ INITIALISE", variant="primary")
-                        btn_lm_step = gr.Button("➡️ NEXT STEP", variant="secondary",
-                                                interactive=False)
+                        btn_lm_step = gr.Button(
+                            "➡️ NEXT STEP", variant="secondary", interactive=False
+                        )
 
                     lm_status = gr.Markdown("*Click Initialise to begin.*")
 
@@ -482,8 +577,17 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
 
             btn_lm_init.click(
                 cb_learner_init,
-                [lm_scenario, lm_names, lm_ctrs, lm_revs,
-                 lm_algo, lm_eps, lm_c, lm_alpha, lm_gamma],
+                [
+                    lm_scenario,
+                    lm_names,
+                    lm_ctrs,
+                    lm_revs,
+                    lm_algo,
+                    lm_eps,
+                    lm_c,
+                    lm_alpha,
+                    lm_gamma,
+                ],
                 [lm_state, lm_chart, lm_status, btn_lm_step],
             )
             btn_lm_step.click(
@@ -531,12 +635,14 @@ with gr.Blocks(title="MAB Banner Optimizer") as demo:
                     """)
 
                 with gr.Column(scale=2):
-                    sb_info  = gr.Markdown("*Select a scenario and click Preview.*")
+                    sb_info = gr.Markdown("*Select a scenario and click Preview.*")
                     sb_chart = gr.Plot(label="Banner Expected Values")
 
-            btn_sb.click(cb_preview_scenario,
-                         [sb_scenario, sb_names, sb_ctrs, sb_revs],
-                         [sb_chart, sb_info])
+            btn_sb.click(
+                cb_preview_scenario,
+                [sb_scenario, sb_names, sb_ctrs, sb_revs],
+                [sb_chart, sb_info],
+            )
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 5 — How It Works

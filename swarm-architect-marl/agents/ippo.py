@@ -4,24 +4,32 @@ Agents are trained independently with shared architecture (parameter sharing opt
 """
 
 import os
-import torch
-import torch.nn as nn
-import numpy as np
-from typing import Callable
 
+import numpy as np
+import torch
+from config import EnvConfig, NetworkConfig, PPOConfig
+from torch import nn
+
+from agents.buffer import Rollout, build_minibatches, compute_gae
 from agents.networks import Actor, Critic
-from agents.buffer import Rollout, compute_gae, build_minibatches
-from config import EnvConfig, PPOConfig, NetworkConfig
 
 
 class IPPOAgent:
-    def __init__(self, agent_id: str, env_cfg: EnvConfig, ppo_cfg: PPOConfig, net_cfg: NetworkConfig):
+    def __init__(
+        self,
+        agent_id: str,
+        env_cfg: EnvConfig,
+        ppo_cfg: PPOConfig,
+        net_cfg: NetworkConfig,
+    ):
         self.agent_id = agent_id
         self.cfg = ppo_cfg
         self.actor = Actor(env_cfg.obs_dim, env_cfg.act_dim, net_cfg.hidden_sizes)
         self.critic = Critic(env_cfg.obs_dim, net_cfg.hidden_sizes)
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=ppo_cfg.lr_actor)
-        self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=ppo_cfg.lr_critic)
+        self.critic_opt = torch.optim.Adam(
+            self.critic.parameters(), lr=ppo_cfg.lr_critic
+        )
         self.rollout = Rollout()
 
     @torch.no_grad()
@@ -46,8 +54,12 @@ class IPPOAgent:
             last_value = self.critic(torch.FloatTensor(last_obs).unsqueeze(0)).item()
 
         advantages, returns = compute_gae(
-            self.rollout.rewards, self.rollout.values, self.rollout.dones,
-            last_value, cfg.gamma, cfg.gae_lambda,
+            self.rollout.rewards,
+            self.rollout.values,
+            self.rollout.dones,
+            last_value,
+            cfg.gamma,
+            cfg.gae_lambda,
         )
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
@@ -68,7 +80,9 @@ class IPPOAgent:
                 ratio = (new_lp - old_lp_b).exp()
                 surr1 = ratio * adv_b
                 surr2 = ratio.clamp(1 - cfg.clip_epsilon, 1 + cfg.clip_epsilon) * adv_b
-                actor_loss = -torch.min(surr1, surr2).mean() - cfg.entropy_coef * entropy.mean()
+                actor_loss = (
+                    -torch.min(surr1, surr2).mean() - cfg.entropy_coef * entropy.mean()
+                )
 
                 values = self.critic(obs_b)
                 critic_loss = nn.functional.mse_loss(values, ret_b)
@@ -96,7 +110,9 @@ class IPPOAgent:
         }
 
     def save(self, path: str):
-        torch.save({"actor": self.actor.state_dict(), "critic": self.critic.state_dict()}, path)
+        torch.save(
+            {"actor": self.actor.state_dict(), "critic": self.critic.state_dict()}, path
+        )
 
     def load(self, path: str):
         ckpt = torch.load(path, map_location="cpu")
@@ -185,16 +201,22 @@ class IPPOTrainer:
     def save_all(self, checkpoint_dir: str, episode: int):
         os.makedirs(checkpoint_dir, exist_ok=True)
         for aid, agent in self.agents.items():
-            path = os.path.join(checkpoint_dir, f"{aid.replace('_', '-')}_ep{episode}.pt")
+            path = os.path.join(
+                checkpoint_dir, f"{aid.replace('_', '-')}_ep{episode}.pt"
+            )
             agent.save(path)
         # Also save a shared actor for the legacy loader
         first = next(iter(self.agents.values()))
-        torch.save({"actor": first.actor.state_dict(), "critic": first.critic.state_dict()},
-                   os.path.join(checkpoint_dir, "best_agent.pt"))
+        torch.save(
+            {"actor": first.actor.state_dict(), "critic": first.critic.state_dict()},
+            os.path.join(checkpoint_dir, "best_agent.pt"),
+        )
 
     def load_all(self, checkpoint_dir: str, episode: int):
         for aid, agent in self.agents.items():
-            path = os.path.join(checkpoint_dir, f"{aid.replace('_', '-')}_ep{episode}.pt")
+            path = os.path.join(
+                checkpoint_dir, f"{aid.replace('_', '-')}_ep{episode}.pt"
+            )
             if os.path.exists(path):
                 agent.load(path)
 

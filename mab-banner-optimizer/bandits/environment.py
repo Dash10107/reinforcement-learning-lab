@@ -4,15 +4,17 @@ Each arm = one banner variant with its own CTR and revenue-per-conversion.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+
 import numpy as np
-from dataclasses import dataclass, field
 
 
 @dataclass
 class BannerArm:
     name: str
-    true_ctr: float          # true click-through rate (hidden from agents)
-    revenue: float           # revenue per conversion ($)
+    true_ctr: float  # true click-through rate (hidden from agents)
+    revenue: float  # revenue per conversion ($)
     impressions: int = 0
     clicks: int = 0
     conversions: int = 0
@@ -31,39 +33,39 @@ SCENARIOS = {
     "🛒 E-Commerce Sale": {
         "description": "4 banner variants for a flash sale — different designs, same product",
         "arms": [
-            BannerArm("Red Urgency",    true_ctr=0.04, revenue=45.0),
-            BannerArm("Blue Minimal",   true_ctr=0.09, revenue=45.0),
-            BannerArm("Green Social",   true_ctr=0.06, revenue=45.0),
-            BannerArm("Video Teaser",   true_ctr=0.12, revenue=45.0),
+            BannerArm("Red Urgency", true_ctr=0.04, revenue=45.0),
+            BannerArm("Blue Minimal", true_ctr=0.09, revenue=45.0),
+            BannerArm("Green Social", true_ctr=0.06, revenue=45.0),
+            BannerArm("Video Teaser", true_ctr=0.12, revenue=45.0),
         ],
     },
     "📰 News Feed CTR": {
         "description": "Headlines A/B/C/D — optimise for ad clicks",
         "arms": [
-            BannerArm("Curiosity Gap",  true_ctr=0.08, revenue=1.2),
-            BannerArm("Direct Value",   true_ctr=0.05, revenue=1.2),
-            BannerArm("Social Proof",   true_ctr=0.11, revenue=1.2),
-            BannerArm("Listicle",       true_ctr=0.07, revenue=1.2),
-            BannerArm("Fear Of Loss",   true_ctr=0.03, revenue=1.2),
+            BannerArm("Curiosity Gap", true_ctr=0.08, revenue=1.2),
+            BannerArm("Direct Value", true_ctr=0.05, revenue=1.2),
+            BannerArm("Social Proof", true_ctr=0.11, revenue=1.2),
+            BannerArm("Listicle", true_ctr=0.07, revenue=1.2),
+            BannerArm("Fear Of Loss", true_ctr=0.03, revenue=1.2),
         ],
     },
     "💰 SaaS Pricing Page": {
         "description": "3 CTA variants — optimise for trial sign-ups",
         "arms": [
-            BannerArm("Free Trial",     true_ctr=0.15, revenue=120.0),
-            BannerArm("Demo Request",   true_ctr=0.07, revenue=180.0),
-            BannerArm("Buy Now",        true_ctr=0.03, revenue=300.0),
+            BannerArm("Free Trial", true_ctr=0.15, revenue=120.0),
+            BannerArm("Demo Request", true_ctr=0.07, revenue=180.0),
+            BannerArm("Buy Now", true_ctr=0.03, revenue=300.0),
         ],
     },
     "🎮 Mobile Game Install": {
         "description": "6 creative variants for app install campaign",
         "arms": [
-            BannerArm("Gameplay GIF",   true_ctr=0.05, revenue=3.5),
-            BannerArm("Reward Lure",    true_ctr=0.08, revenue=3.5),
-            BannerArm("Social Proof",   true_ctr=0.06, revenue=3.5),
-            BannerArm("Tutorial Clip",  true_ctr=0.04, revenue=3.5),
-            BannerArm("Challenge CTA",  true_ctr=0.10, revenue=3.5),
-            BannerArm("High Score",     true_ctr=0.07, revenue=3.5),
+            BannerArm("Gameplay GIF", true_ctr=0.05, revenue=3.5),
+            BannerArm("Reward Lure", true_ctr=0.08, revenue=3.5),
+            BannerArm("Social Proof", true_ctr=0.06, revenue=3.5),
+            BannerArm("Tutorial Clip", true_ctr=0.04, revenue=3.5),
+            BannerArm("Challenge CTA", true_ctr=0.10, revenue=3.5),
+            BannerArm("High Score", true_ctr=0.07, revenue=3.5),
         ],
     },
     "🔬 Custom": {

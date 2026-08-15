@@ -63,7 +63,7 @@ std = log_std.exp()
 distribution = Normal(mean, std)
 
 # 3. We sample a random throttle percentage from the curve
-action = distribution.rsample() 
+action = distribution.rsample()
 
 # 4. Squeeze it between -1.0 and 1.0 for the physics engine
 action = torch.tanh(action)
@@ -123,7 +123,7 @@ log_prob = distribution.log_prob(action)
 
 # If the action was highly unpredictable (high entropy),
 # the log_prob is very low/negative. We subtract it to give a bonus!
-actor_loss = (alpha * log_prob) - min_q_value 
+actor_loss = (alpha * log_prob) - min_q_value
 ```
 
 We force it to discover 1,000 different, slightly messy ways to land the rocket. By forcing the AI to explore the chaos, it builds an incredibly robust, generalized intuition. When that massive gust of wind hits it in the real world, the AI doesn't panic—it has already explored that exact chaotic state during its training and knows exactly how to dynamically recover.

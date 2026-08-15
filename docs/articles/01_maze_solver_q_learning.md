@@ -50,14 +50,15 @@ To solve this, our AI uses an **Epsilon-Greedy** strategy. It is the mathematica
 ```python
 import numpy as np
 
+
 def choose_action(state, Q_table, epsilon):
     # EXPLORE: Roll a loaded die
     if np.random.uniform(0, 1) < epsilon:
-        return np.random.choice(4) # Pick a completely random direction
-        
+        return np.random.choice(4)  # Pick a completely random direction
+
     # EXPLOIT: Use the cheat sheet
     else:
-        return np.argmax(Q_table[state]) # Pick the mathematically best direction
+        return np.argmax(Q_table[state])  # Pick the mathematically best direction
 ```
 
 When training starts, `epsilon` is `1.0` (100% exploration). The AI stumbles blindly into walls. As it learns, `epsilon` decays to `0.01`. It becomes a master of the maze, only exploring 1% of the time just in case there is a slightly faster shortcut it missed.
@@ -81,23 +82,24 @@ Here is the entire training loop in Python. Notice how short the core logic is:
 ```python
 def train_qlearning(env, episodes, alpha, gamma, decay):
     agent = TabularAgent(env.n_states, env.action_space.n, alpha, gamma)
-    
+
     for _ in range(episodes):
         state, _ = env.reset()
-        
+
         # Walk through the maze until we find the exit or time out
         for _ in range(env.n_states * 4):
-            action = agent.choose_action(state) # Epsilon-greedy
+            action = agent.choose_action(state)  # Epsilon-greedy
             next_state, reward, done, _, _ = env.step(action)
-            
+
             # The core Q-Learning update rule
             # Notice the np.max() - it bootstraps from the *best* possible next move
             td_target = reward + gamma * np.max(agent.Q[next_state]) * (1 - done)
             agent.Q[state, action] += alpha * (td_target - agent.Q[state, action])
-            
+
             state = next_state
-            if done: break
-                
+            if done:
+                break
+
         agent.decay_epsilon(decay)
 ```
 
@@ -121,7 +123,7 @@ Notice the subtle difference from Q-Learning? There is no `max` operator. The co
 
 ```python
 # SARSA's on-policy TD update
-# We don't assume the best possible next move. 
+# We don't assume the best possible next move.
 # We evaluate the action we are ACTUALLY going to take next (a').
 td_target = reward + gamma * agent.Q[next_state, next_action] * (1 - done)
 ```

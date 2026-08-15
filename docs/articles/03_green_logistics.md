@@ -31,7 +31,7 @@ In our Python implementation, A* evaluates the grid by adding the distance trave
 def _astar_path(env: GreenCityEnv):
     # A* minimises step count (distance), completely ignoring carbon.
     start = tuple(env.agent_pos.tolist())
-    goal  = tuple(env.goal.tolist())
+    goal = tuple(env.goal.tolist())
 
     # The Heuristic: Manhattan distance to the goal
     def h(p):
@@ -42,8 +42,9 @@ def _astar_path(env: GreenCityEnv):
 
     while open_heap:
         _, g, cur, path = heapq.heappop(open_heap)
-        
-        if cur == goal: return path
+
+        if cur == goal:
+            return path
         # ... explore neighbors, add to heap, repeat ...
 ```
 
@@ -74,6 +75,7 @@ Because the environment is too massive for a simple lookup table, we use a Neura
 ```python
 import torch.nn as nn
 
+
 class DQN(nn.Module):
     def __init__(self, state_dim, action_dim):
         super().__init__()
@@ -82,9 +84,9 @@ class DQN(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, action_dim) # Outputs 4 Q-Values (Up, Down, Left, Right)
+            nn.Linear(128, action_dim),  # Outputs 4 Q-Values (Up, Down, Left, Right)
         )
-        
+
     def forward(self, state):
         return self.network(state)
 ```
@@ -126,13 +128,14 @@ When it's time to train, the network doesn't look at what just happened. Instead
 ```python
 import random
 
+
 class ReplayBuffer:
     def __init__(self, capacity=100000):
         self.memory = []
-        
+
     def store_memory(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
-        
+
     def dream(self, batch_size=64):
         # Pull a randomized batch of 64 memories to break correlation
         return random.sample(self.memory, batch_size)

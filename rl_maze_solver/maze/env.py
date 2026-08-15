@@ -3,8 +3,9 @@ Enhanced MazeEnv — works with both DFS corridor mazes and open random mazes.
 """
 
 from __future__ import annotations
-import numpy as np
+
 import gymnasium as gym
+import numpy as np
 from gymnasium import spaces
 
 

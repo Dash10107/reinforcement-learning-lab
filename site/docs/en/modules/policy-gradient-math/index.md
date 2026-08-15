@@ -88,7 +88,7 @@ def reinforce_update(policy, optimizer, episode, gamma=0.99):
     # Policy gradient update
     loss = 0
     for log_prob, G in zip(episode.log_probs, returns):
-        loss -= log_prob * G    # negative because we do gradient ascent
+        loss -= log_prob * G  # negative because we do gradient ascent
 
     optimizer.zero_grad()
     loss.backward()

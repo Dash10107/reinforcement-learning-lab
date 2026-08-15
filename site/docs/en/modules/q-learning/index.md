@@ -55,7 +55,7 @@ In code:
 
 ```python
 def update(state, action, reward, next_state, done):
-    best_next = np.max(Q[next_state])              # best option from next state
+    best_next = np.max(Q[next_state])  # best option from next state
     target = reward + gamma * best_next * (not done)
     Q[state, action] += alpha * (target - Q[state, action])
 ```

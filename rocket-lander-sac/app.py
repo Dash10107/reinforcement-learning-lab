@@ -5,23 +5,27 @@ a Soft Actor-Critic agent on the LunarLander-v3 continuous control task.
 """
 
 from __future__ import annotations
-import os
-import numpy as np
-import gradio as gr
-from stable_baselines3 import SAC
 
-from core.mission import run_mission, MissionResult
+import os
+
+import gradio as gr
+import numpy as np
+from core.mission import MissionResult, run_mission
 from core.trainer import TrainingState, start_training
+from stable_baselines3 import SAC
 from viz.charts import (
-    mission_overview, single_episode_detail,
-    training_dashboard, empty_figure,
+    empty_figure,
+    mission_overview,
+    single_episode_detail,
+    training_dashboard,
 )
-from viz.replay import make_episode_gif, make_comparison_gif
+from viz.replay import make_comparison_gif, make_episode_gif
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
 _MODEL_PATHS = ["sac_finetuned.zip", "sac_rocket_lander.zip"]
 _model: SAC | None = None
+
 
 def _load_model(path: str | None = None) -> tuple[SAC, str]:
     candidates = ([path] if path else []) + _MODEL_PATHS
@@ -29,9 +33,10 @@ def _load_model(path: str | None = None) -> tuple[SAC, str]:
         if p and os.path.exists(p):
             try:
                 return SAC.load(p), p
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
     raise FileNotFoundError("No valid SAC checkpoint found.")
+
 
 def _get_model() -> SAC:
     global _model
@@ -39,10 +44,12 @@ def _get_model() -> SAC:
         _model, _ = _load_model()
     return _model
 
+
 # ── Global training state ─────────────────────────────────────────────────────
 _train_state = TrainingState()
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
+
 
 def cb_run_mission(
     n_episodes: int,
@@ -90,28 +97,34 @@ def cb_run_mission(
 | Metric | Value |
 |---|---|
 | **Avg Reward** | `{mission.avg_reward:+.2f}` |
-| **Best** | `{best.total_reward:+.2f}` ({best.status_emoji} Ep {best.episode_idx+1}) |
-| **Worst** | `{mission.worst.total_reward:+.2f}` ({mission.worst.status_emoji} Ep {mission.worst.episode_idx+1}) |
+| **Best** | `{best.total_reward:+.2f}` ({best.status_emoji} Ep {best.episode_idx + 1}) |
+| **Worst** | `{mission.worst.total_reward:+.2f}` ({mission.worst.status_emoji} Ep {mission.worst.episode_idx + 1}) |
 | **Success Rate** | `{sr:.1f}%` |
 | **Episodes** | `{len(mission.episodes)}` |
 
 **Per-Episode Scores:**
 """
     per_ep = "".join(
-        f"- `#{e.episode_idx+1}` {e.status_emoji} **{e.status}** — {e.total_reward:+.1f} ({len(e.steps)} steps)\n"
+        f"- `#{e.episode_idx + 1}` {e.status_emoji} **{e.status}** — {e.total_reward:+.1f} ({len(e.steps)} steps)\n"
         for e in mission.episodes
     )
     stats_md += per_ep
 
     ep_choices = [
-        f"#{e.episode_idx+1} — {e.status_emoji} {e.status} ({e.total_reward:+.1f})"
+        f"#{e.episode_idx + 1} — {e.status_emoji} {e.status} ({e.total_reward:+.1f})"
         for e in mission.episodes
     ]
 
     _last_mission["data"] = mission
     _last_mission["frames"] = all_frames
 
-    return overview_fig, gif_path, detail_fig, stats_md, gr.update(choices=ep_choices, value=ep_choices[0])
+    return (
+        overview_fig,
+        gif_path,
+        detail_fig,
+        stats_md,
+        gr.update(choices=ep_choices, value=ep_choices[0]),
+    )
 
 
 _last_mission: dict = {"data": None, "frames": []}
@@ -367,7 +380,6 @@ $$\\mathcal{L}(\\alpha) = \\mathbb{E}\\left[-\\alpha(\\log\\pi(a|s)+\\bar{\\math
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="SpaceX Mission Control — SAC Rocket Lander") as demo:
-
     gr.HTML("""
     <div class="mc-header">
         <div class="mc-sub">Autonomous Flight Intelligence System · SAC v2.0</div>
@@ -383,23 +395,39 @@ with gr.Blocks(title="SpaceX Mission Control — SAC Rocket Lander") as demo:
     """)
 
     with gr.Tabs():
-
         # ── Mission Control ────────────────────────────────────────────────
         with gr.Tab("🚀 MISSION CONTROL"):
-
             with gr.Row():
                 with gr.Column(scale=1, min_width=300):
-                    gr.HTML('<div class="mc-sub" style="margin-bottom:0.8rem">MISSION PARAMETERS</div>')
+                    gr.HTML(
+                        '<div class="mc-sub" style="margin-bottom:0.8rem">MISSION PARAMETERS</div>'
+                    )
 
-                    n_episodes = gr.Slider(1, 10, value=3, step=1,
-                                           label="Landing Attempts")
-                    gravity = gr.Slider(-20.0, -1.0, value=-10.0, step=0.5,
-                                        label="Gravity (m/s²)")
-                    enable_wind = gr.Checkbox(label="Enable Wind Disturbance", value=False)
-                    wind_power = gr.Slider(0.0, 20.0, value=5.0, step=0.5,
-                                           label="Wind Power", visible=False)
-                    turbulence = gr.Slider(0.0, 2.0, value=0.5, step=0.1,
-                                           label="Turbulence Power", visible=False)
+                    n_episodes = gr.Slider(
+                        1, 10, value=3, step=1, label="Landing Attempts"
+                    )
+                    gravity = gr.Slider(
+                        -20.0, -1.0, value=-10.0, step=0.5, label="Gravity (m/s²)"
+                    )
+                    enable_wind = gr.Checkbox(
+                        label="Enable Wind Disturbance", value=False
+                    )
+                    wind_power = gr.Slider(
+                        0.0,
+                        20.0,
+                        value=5.0,
+                        step=0.5,
+                        label="Wind Power",
+                        visible=False,
+                    )
+                    turbulence = gr.Slider(
+                        0.0,
+                        2.0,
+                        value=0.5,
+                        step=0.1,
+                        label="Turbulence Power",
+                        visible=False,
+                    )
                     render_gif = gr.Checkbox(label="Render Animated Replay", value=True)
 
                     enable_wind.change(
@@ -408,18 +436,30 @@ with gr.Blocks(title="SpaceX Mission Control — SAC Rocket Lander") as demo:
                         outputs=[wind_power, turbulence],
                     )
 
-                    launch_btn = gr.Button("🚀  INITIATE LAUNCH SEQUENCE", variant="primary")
+                    launch_btn = gr.Button(
+                        "🚀  INITIATE LAUNCH SEQUENCE", variant="primary"
+                    )
 
-                    gr.HTML('<div class="mc-sub" style="margin-top:1.2rem;margin-bottom:0.4rem">MODEL</div>')
+                    gr.HTML(
+                        '<div class="mc-sub" style="margin-top:1.2rem;margin-bottom:0.4rem">MODEL</div>'
+                    )
                     load_btn = gr.Button("📂 Reload Checkpoint")
-                    load_status = gr.Textbox(label="", lines=1, interactive=False,
-                                             placeholder="Model status…")
+                    load_status = gr.Textbox(
+                        label="",
+                        lines=1,
+                        interactive=False,
+                        placeholder="Model status…",
+                    )
                     load_btn.click(cb_load_finetuned, outputs=load_status)
 
                 with gr.Column(scale=2):
-                    stats_md = gr.Markdown("*Configure mission parameters and click Launch.*")
+                    stats_md = gr.Markdown(
+                        "*Configure mission parameters and click Launch.*"
+                    )
                     episode_selector = gr.Dropdown(
-                        choices=[], label="Inspect Episode", interactive=True,
+                        choices=[],
+                        label="Inspect Episode",
+                        interactive=True,
                     )
 
             with gr.Row():
@@ -441,13 +481,25 @@ with gr.Blocks(title="SpaceX Mission Control — SAC Rocket Lander") as demo:
             )
             launch_btn.click(
                 cb_run_mission,
-                inputs=[n_episodes, gravity, enable_wind, wind_power, turbulence, render_gif],
-                outputs=[overview_plot, replay_gif, detail_plot, stats_md, episode_selector],
+                inputs=[
+                    n_episodes,
+                    gravity,
+                    enable_wind,
+                    wind_power,
+                    turbulence,
+                    render_gif,
+                ],
+                outputs=[
+                    overview_plot,
+                    replay_gif,
+                    detail_plot,
+                    stats_md,
+                    episode_selector,
+                ],
             )
 
         # ── Training Lab ───────────────────────────────────────────────────
         with gr.Tab("🧪 TRAINING LAB"):
-
             gr.Markdown("### Fine-tune the SAC agent in your browser")
             gr.Markdown(
                 "Runs in a background thread — click **Refresh Metrics** to pull updates. "
@@ -456,22 +508,35 @@ with gr.Blocks(title="SpaceX Mission Control — SAC Rocket Lander") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1):
-                    gr.HTML('<div class="mc-sub" style="margin-bottom:0.8rem">HYPERPARAMETERS</div>')
-                    train_steps = gr.Slider(5_000, 200_000, value=20_000, step=5_000,
-                                            label="Total Timesteps")
-                    train_lr = gr.Slider(1e-5, 1e-3, value=3e-4, step=1e-5,
-                                         label="Learning Rate")
-                    train_batch = gr.Slider(64, 512, value=256, step=64,
-                                            label="Batch Size")
+                    gr.HTML(
+                        '<div class="mc-sub" style="margin-bottom:0.8rem">HYPERPARAMETERS</div>'
+                    )
+                    train_steps = gr.Slider(
+                        5_000,
+                        200_000,
+                        value=20_000,
+                        step=5_000,
+                        label="Total Timesteps",
+                    )
+                    train_lr = gr.Slider(
+                        1e-5, 1e-3, value=3e-4, step=1e-5, label="Learning Rate"
+                    )
+                    train_batch = gr.Slider(
+                        64, 512, value=256, step=64, label="Batch Size"
+                    )
 
                     with gr.Row():
-                        btn_train_start = gr.Button("▶ Start Training", variant="primary")
-                        btn_train_stop  = gr.Button("⏹ Stop", variant="stop")
+                        btn_train_start = gr.Button(
+                            "▶ Start Training", variant="primary"
+                        )
+                        btn_train_stop = gr.Button("⏹ Stop", variant="stop")
                     btn_refresh = gr.Button("🔄 Refresh Metrics")
                     train_msg = gr.Textbox(label="", lines=2, interactive=False)
 
                 with gr.Column(scale=2):
-                    train_status_md = gr.Markdown("*Start training to see live metrics.*")
+                    train_status_md = gr.Markdown(
+                        "*Start training to see live metrics.*"
+                    )
                     train_plot = gr.Plot(label="Live Training Dashboard")
 
             btn_train_start.click(
@@ -480,7 +545,9 @@ with gr.Blocks(title="SpaceX Mission Control — SAC Rocket Lander") as demo:
                 outputs=train_msg,
             )
             btn_train_stop.click(cb_stop_training, outputs=train_msg)
-            btn_refresh.click(cb_refresh_training, outputs=[train_plot, train_status_md])
+            btn_refresh.click(
+                cb_refresh_training, outputs=[train_plot, train_status_md]
+            )
 
         # ── Algorithm Guide ────────────────────────────────────────────────
         with gr.Tab("📚 ALGORITHM GUIDE"):

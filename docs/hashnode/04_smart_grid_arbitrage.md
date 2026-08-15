@@ -60,25 +60,25 @@ def solve_dp(env, n_soc_levels):
     # Create a grid of all possible battery charge levels
     soc_grid = np.linspace(0, env.cap, n_soc_levels)
     V = np.zeros((25, n_soc_levels))
-    
+
     # Work backwards from the end of the day to the beginning
     for t in reversed(range(24)):
         for si, soc in enumerate(soc_grid):
             best_val = -1e9
-            
+
             # Test every possible action (-3kW to +3kW)
             for action in possible_actions:
                 reward, next_soc = simulate_action(action, t, soc)
-                
+
                 # The total value is the immediate reward + the known future value
                 total = reward + V[t + 1, get_index(next_soc)]
-                
+
                 if total > best_val:
                     best_val = total
-                    
+
             V[t, si] = best_val
 
-    return V # Returns the absolute maximum possible profit
+    return V  # Returns the absolute maximum possible profit
 ```
 
 Because DP explores every possible state starting from the end, it guarantees the perfect schedule. 

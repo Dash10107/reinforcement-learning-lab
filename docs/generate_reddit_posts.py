@@ -1,6 +1,8 @@
 import os
 
-os.makedirs(r'C:\Users\daksh\OneDrive\Desktop\ReinforcementLearning\docs\reddit', exist_ok=True)
+os.makedirs(
+    r"C:\Users\daksh\OneDrive\Desktop\ReinforcementLearning\docs\reddit", exist_ok=True
+)
 
 posts = {
     "01_maze_solver.md": """**Target Subreddits to Post In:** r/Python, r/learnmachinelearning, r/artificial
@@ -23,7 +25,6 @@ I ended up turning this into an interactive visual project. It's part of a massi
 👉 **[Open Source Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab)**
 
 *(Optional: Attach `maze_preview.png` to your Reddit post!)*""",
-
     "02_bandit_optimizer.md": """**Target Subreddits to Post In:** r/SideProject, r/SaaS, r/MachineLearning
 
 **Title:**
@@ -40,7 +41,6 @@ I built an open-source Python simulator to visualize exactly how Thompson Sampli
 👉 **[Open Source Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab)**
 
 *(Optional: Attach `bandit_cover.png` to your Reddit post!)*""",
-
     "03_warehouse_marl.md": """**Target Subreddits to Post In:** r/MachineLearning, r/artificial, r/robotics
 
 **Title:**
@@ -59,7 +59,6 @@ To understand the math behind this, I built a PyTorch swarm simulation. It's par
 👉 **[Open Source Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab)**
 
 *(Optional: Attach `warehouse_marl_cover.png` to your Reddit post!)*""",
-
     "04_rocket_lander.md": """**Target Subreddits to Post In:** r/programming, r/Python, r/MachineLearning
 
 **Title:**
@@ -78,7 +77,6 @@ I built a physics simulation landing a rocket using PyTorch and SAC to visualize
 👉 **[Open Source Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab)**
 
 *(Optional: Attach `rocket_sac_cover.png` to your Reddit post!)*""",
-
     "05_smart_grid.md": """**Target Subreddits to Post In:** r/learnmachinelearning, r/Python
 
 **Title:**
@@ -95,7 +93,6 @@ I built an interactive smart grid trading bot to watch this equation in real-tim
 👉 **[Open Source Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab)**
 
 *(Optional: Attach `smart_grid_cover.png` to your Reddit post!)*""",
-
     "06_digital_calligrapher.md": """**Target Subreddits to Post In:** r/artificial, r/MachineLearning
 
 **Title:**
@@ -111,11 +108,20 @@ To visualize this physically instead of through text, I built a simulated robot 
 I've open-sourced the whole thing (along with 10 other interactive RL projects) on GitHub. If you want an intuitive, visual understanding of RLHF under the hood with PyTorch code, check out the repo: 
 👉 **[Open Source Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab)**
 
-*(Optional: Attach `rlhf_calligraphy_cover.png` to your Reddit post!)*"""
+*(Optional: Attach `rlhf_calligraphy_cover.png` to your Reddit post!)*""",
 }
 
 for filename, content in posts.items():
-    with open(os.path.join(r'C:\Users\daksh\OneDrive\Desktop\ReinforcementLearning\docs\reddit', filename), 'w', encoding='utf-8') as f:
+    with open(
+        os.path.join(
+            r"C:\Users\daksh\OneDrive\Desktop\ReinforcementLearning\docs\reddit",
+            filename,
+        ),
+        "w",
+        encoding="utf-8",
+    ) as f:
         f.write(content)
 
-print("Regenerated 6 reddit posts in docs/reddit/ without the visible search keywords block.")
+print(
+    "Regenerated 6 reddit posts in docs/reddit/ without the visible search keywords block."
+)

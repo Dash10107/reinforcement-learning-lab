@@ -69,6 +69,7 @@ Open your new project in your editor. You only need to change two things to get 
 1. **The Environment Instance**: Replace the custom environment initialization with your Gymnasium environment:
    ```python
    import gymnasium as gym
+
    env = gym.make("CartPole-v1")
    ```
 2. **The State/Action Shapes**: Ensure your neural network (or Q-table) correctly reads the observation space shape and action space size of the new environment.
@@ -103,4 +104,4 @@ The open-source community thrives on shared knowledge. Head over to our **[GitHu
 - A GIF or screenshot of your agent succeeding.
 
 > [!TIP]
-> **Need a completely blank slate?** Check out our [Starter Templates](./starter-templates.md) for bare-minimum PyTorch implementations of the core training loops without the interactive Gradio dashboards.
+> **Need a completely blank slate?** Check out our [Starter Templates](../starter-templates/) for bare-minimum PyTorch implementations of the core training loops without the interactive Gradio dashboards.

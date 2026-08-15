@@ -1,5 +1,5 @@
-from mpe2 import simple_spread_v3
 from config import EnvConfig
+from mpe2 import simple_spread_v3
 
 
 def make_env(cfg: EnvConfig, render: bool = False) -> object:

@@ -1,0 +1,16 @@
+[lint]
+ignore = [
+    "E501",  # Line too long
+    "B008",  # Do not perform function call in argument defaults
+    "B006",  # Do not use mutable data structures for argument defaults
+    "EXE002", # File is executable but no shebang is present
+    "RUF012", # Mutable default value for class attribute
+    "RUF059", # Unpacked variable is never used
+    "F841",  # Local variable is assigned to but never used
+    "PLW0602", # Using global but no assignment is done
+    "S110",  # try-except-pass
+    "BLE001", # blind exception
+    "ISC004", # unparenthesized implicit string concatenation
+    "SIM115", # use context manager
+    "C408"   # unnecessary dict call
+]

@@ -45,7 +45,7 @@ from hmmlearn import hmm
 import numpy as np
 
 # Fit a 3-regime HMM to market returns
-model = hmm.GaussianHMM(n_components=3, covariance_type='full', n_iter=100)
+model = hmm.GaussianHMM(n_components=3, covariance_type="full", n_iter=100)
 model.fit(returns.reshape(-1, 1))
 
 # Decode: infer the most likely regime at each time step
