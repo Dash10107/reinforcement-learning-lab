@@ -83,6 +83,7 @@ const enResourceItems = [
   { text: "Overview", link: "/en/resources/" },
   { text: "Core Concepts", link: "/en/resources/concepts/" },
   { text: "Getting Started", link: "/en/resources/getting-started/" },
+  { text: "Build Your Own Agent", link: "/en/resources/build-your-own/" },
   { text: "Starter Templates", link: "/en/resources/starter-templates/" },
   { text: "Roadmap", link: "/en/resources/roadmap/" },
 ];
