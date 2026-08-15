@@ -131,10 +131,10 @@ def comparison_dashboard(
     for i, (name, agent) in enumerate(agents.items()):
         offset = (i - n_agents / 2 + 0.5) * width
         pcts = agent.arm_pull_pcts
-        bars = ax3.bar(
+        ax3.bar(
             x_pos + offset,
             pcts,
-            width=width * 0.9,  # noqa: F841
+            width=width * 0.9,
             color=_agent_color(name),
             alpha=0.8,
             edgecolor=BG,
@@ -320,13 +320,6 @@ def belief_chart(
         )
 
         # True expected values overlay
-        true_evs = [
-            c * r
-            for c, r in zip(
-                true_ctrs,  # noqa: F841
-                [agent.values[i] / max(true_ctrs[i], 1e-9) for i in range(n)],
-            )
-        ]
         # Use arm pulls to estimate revenue separately — just show true CTR as line
         for i, (ctr, bar) in enumerate(zip(true_ctrs, bars)):
             ax.text(

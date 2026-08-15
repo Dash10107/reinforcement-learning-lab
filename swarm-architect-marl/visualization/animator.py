@@ -128,8 +128,8 @@ def overlay_metrics_on_frame(
         fontsize=8,
         color="white",
         fontweight="bold",
-        bbox=dict(boxstyle="round,pad=0.2", fc="black", alpha=0.6),
-    )  # noqa: C408
+        bbox={"boxstyle": "round,pad=0.2", "fc": "black", "alpha": 0.6},
+    )
 
     if rewards:
         team_r = sum(rewards.values())
@@ -139,8 +139,8 @@ def overlay_metrics_on_frame(
             f"Team Reward: {team_r:.3f}",
             fontsize=7,
             color="#4ECDC4",
-            bbox=dict(boxstyle="round,pad=0.2", fc="black", alpha=0.6),
-        )  # noqa: C408
+            bbox={"boxstyle": "round,pad=0.2", "fc": "black", "alpha": 0.6},
+        )
 
     fig.subplots_adjust(0, 0, 1, 1)
     buf = io.BytesIO()

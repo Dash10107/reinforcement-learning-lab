@@ -126,9 +126,11 @@ def cb_load_scenario(scenario_name: str):
 
 
 def cb_run_dispatch(
-    scenario_name: str, strategy: str, progress: gr.Progress = gr.Progress()
-):  # noqa: B008
+    scenario_name: str, strategy: str, progress: gr.Progress | None = None
+):
     global _last_scenario
+    if progress is None:
+        progress = gr.Progress()
     progress(0.1, desc="Loading scenario…")
     _last_scenario = get_scenario(scenario_name)
     sc = _last_scenario
