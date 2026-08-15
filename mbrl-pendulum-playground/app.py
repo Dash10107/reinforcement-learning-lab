@@ -162,8 +162,10 @@ def cb_refresh_train():
 
 
 def cb_imagination(
-    start_preset, horizon, action_val, progress: gr.Progress = gr.Progress()
-):  # noqa: B008
+    start_preset, horizon, action_val, progress: gr.Progress | None = None
+):
+    if progress is None:
+        progress = gr.Progress()
     model = _best_model()
     if model is None:
         return empty_fig("No model. Train one first."), "*No model available.*"

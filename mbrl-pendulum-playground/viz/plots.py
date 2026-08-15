@@ -78,22 +78,22 @@ def single_step_comparison(
 
     x = np.arange(3)
     w = 0.32
-    bars_r = ax.bar(
+    ax.bar(
         x - w / 2,
         real_next,
         width=w,
         color=REAL,
         label="Real (environment)",
         edgecolor=BG,
-    )  # noqa: F841
-    bars_p = ax.bar(
+    )
+    ax.bar(
         x + w / 2,
         pred_next,
         width=w,
         color=IMAG,
         label="Predicted (model)",
         edgecolor=BG,
-    )  # noqa: F841
+    )
 
     if pred_std is not None:
         ax.errorbar(
