@@ -124,7 +124,7 @@ marl-warehouse-sim/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd marl-warehouse-sim
 pip install -r requirements.txt
 python app.py

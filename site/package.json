@@ -1,0 +1,22 @@
+{
+  "name": "reinforcement-learning-lab-site",
+  "version": "1.0.0",
+  "description": "Course site for Reinforcement Learning Lab — powered by VitePress",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "dependencies": {
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "devDependencies": {
+    "markdown-it-mathjax3": "^4.3.2"
+  }
+}

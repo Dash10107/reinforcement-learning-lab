@@ -90,7 +90,7 @@ AI-Tutor-A2C/
 Clone and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd AI-Tutor-A2C
 pip install -r requirements.txt
 ```

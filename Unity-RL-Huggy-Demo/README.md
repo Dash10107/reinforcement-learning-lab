@@ -87,7 +87,7 @@ This project is intentionally minimal on the Python side — the interesting wor
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd Unity-RL-Huggy-Demo
 pip install gradio
 python app.py

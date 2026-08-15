@@ -1,0 +1,690 @@
+/* ===== Reinforcement Learning Lab — VitePress Theme ===== */
+/* Aesthetic: warm off-white, editorial serif headings, teal brand */
+/* Inspired by Anthropic docs / learn-harness-engineering style   */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap');
+
+/* ─── CSS Variables (Light) ─────────────────────────────────── */
+:root {
+  /* Warm off-white backgrounds (same feel as harness site) */
+  --vp-c-bg:      #FAF9F6;
+  --vp-c-bg-alt:  #F3F2ED;
+  --vp-c-bg-elv:  #FFFFFF;
+  --vp-c-bg-soft: #F3F2ED;
+
+  /* Text */
+  --vp-c-text-1: #1A1A1A;
+  --vp-c-text-2: #4A4A4A;
+  --vp-c-text-3: #787878;
+
+  /* Brand — Deep Teal (RL Lab) */
+  --vp-c-brand-1:    #0D7A6E;
+  --vp-c-brand-2:    #0A6860;
+  --vp-c-brand-3:    #085650;
+  --vp-c-brand-soft: rgba(13, 122, 110, 0.09);
+
+  /* Sidebar */
+  --vp-sidebar-width:    296px;
+  --vp-sidebar-bg-color: #F3F2ED;
+  --vp-c-divider:        rgba(0, 0, 0, 0.09);
+
+  /* Layout */
+  --vp-nav-bg-color:    #FAF9F6;
+  --vp-layout-max-width: 1376px;
+
+  /* Typography */
+  --vp-font-family-base: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ─── Dark Mode ──────────────────────────────────────────────── */
+.dark {
+  --vp-c-bg:      #141414;
+  --vp-c-bg-alt:  #0D0D0D;
+  --vp-c-bg-elv:  #1E1E1E;
+  --vp-c-bg-soft: #0D0D0D;
+
+  --vp-c-text-1: #E8E8E8;
+  --vp-c-text-2: #ABABAB;
+  --vp-c-text-3: #757575;
+
+  --vp-c-brand-1:    #2DC4B0;
+  --vp-c-brand-2:    #0D7A6E;
+  --vp-c-brand-3:    #0A6860;
+  --vp-c-brand-soft: rgba(45, 196, 176, 0.12);
+
+  --vp-sidebar-bg-color: #0D0D0D;
+  --vp-nav-bg-color:     #141414;
+  --vp-c-divider:        rgba(255, 255, 255, 0.09);
+}
+
+/* ─── Global Typography ──────────────────────────────────────── */
+.vp-doc {
+  font-size: 16px;
+  line-height: 1.78;
+  letter-spacing: 0.005em;
+}
+
+.vp-doc h1 {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 3.25rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--vp-c-text-1);
+}
+
+.vp-doc h2 {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin-top: 2.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-1);
+}
+
+.vp-doc h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  letter-spacing: -0.005em;
+}
+
+/* ─── Links ──────────────────────────────────────────────────── */
+.vp-doc a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+  transition: color 0.18s, opacity 0.18s;
+}
+.vp-doc a:hover {
+  color: var(--vp-c-brand-2);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* ─── Blockquotes ────────────────────────────────────────────── */
+.vp-doc blockquote {
+  border-left: 4px solid var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+  border-radius: 0 8px 8px 0;
+  padding: 13px 20px;
+  margin: 20px 0;
+  font-style: normal;
+}
+.vp-doc blockquote p { margin: 0; }
+
+/* ─── Code ───────────────────────────────────────────────────── */
+.vp-doc code {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.875em;
+}
+
+.vp-doc div[class*='language-'] {
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg-elv);
+}
+
+.vp-doc div[class*='language-'] button.copy {
+  background-color: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+}
+
+.vp-doc :not(pre) > code {
+  background: var(--vp-c-bg-alt);
+  color: var(--vp-c-text-1);
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--vp-c-divider);
+  font-size: 0.875em;
+}
+
+/* ─── Lists ──────────────────────────────────────────────────── */
+.vp-doc ul, .vp-doc ol { padding-left: 1.3rem; }
+.vp-doc li { margin: 6px 0; }
+.vp-doc li::marker { color: var(--vp-c-brand-1); }
+
+/* ─── Tables ─────────────────────────────────────────────────── */
+.vp-doc table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.vp-doc th, .vp-doc td {
+  padding: 10px 16px;
+  border: 1px solid var(--vp-c-divider);
+}
+.vp-doc th {
+  background: var(--vp-c-brand-soft);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+.vp-doc tr:hover td { background: var(--vp-c-bg-alt); }
+
+/* ─── HR ─────────────────────────────────────────────────────── */
+.vp-doc hr {
+  border: none;
+  border-top: 1px solid var(--vp-c-divider);
+  margin: 2.25rem 0;
+}
+
+/* ─── Homepage Hero ──────────────────────────────────────────── */
+.VPHero .name {
+  font-family: 'Newsreader', Georgia, serif !important;
+  font-size: 3.5rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.05 !important;
+  color: var(--vp-c-text-1) !important;
+  /* No gradient — clean editorial like harness site */
+}
+
+.VPHero .text {
+  font-family: 'Newsreader', Georgia, serif !important;
+  font-size: 1.55rem !important;
+  font-weight: 400 !important;
+  font-style: italic !important;
+  line-height: 1.45 !important;
+  max-width: 600px !important;
+  color: var(--vp-c-text-2) !important;
+}
+
+.VPHero .tagline {
+  font-size: 1.05rem !important;
+  line-height: 1.7 !important;
+  max-width: 580px !important;
+  color: var(--vp-c-text-2) !important;
+  font-style: normal !important;
+}
+
+/* CTA Buttons */
+.VPHero .action .VPButton.brand {
+  background-color: #1A1A1A !important;
+  border: 1px solid #1A1A1A !important;
+  border-radius: 999px !important;
+  padding: 0 22px !important;
+  height: 42px !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  transition: background-color 0.2s !important;
+  color: #fff !important;
+}
+.VPHero .action .VPButton.brand:hover {
+  background-color: #333 !important;
+  border-color: #333 !important;
+}
+
+.dark .VPHero .action .VPButton.brand {
+  background-color: #E5E5E5 !important;
+  border-color: #E5E5E5 !important;
+  color: #1A1A1A !important;
+}
+.dark .VPHero .action .VPButton.brand:hover {
+  background-color: #fff !important;
+  border-color: #fff !important;
+}
+
+.VPHero .action .VPButton.alt {
+  border-radius: 999px !important;
+  border: 1px solid var(--vp-c-divider) !important;
+  height: 42px !important;
+  padding: 0 20px !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  transition: border-color 0.2s, background-color 0.2s !important;
+}
+.VPHero .action .VPButton.alt:hover {
+  border-color: var(--vp-c-brand-1) !important;
+  background-color: var(--vp-c-brand-soft) !important;
+  color: var(--vp-c-brand-1) !important;
+}
+
+/* ─── Feature Cards ──────────────────────────────────────────── */
+.VPFeatures .item { padding: 8px; }
+
+.VPFeature {
+  border-radius: 12px !important;
+  border: 1px solid var(--vp-c-divider) !important;
+  background-color: var(--vp-c-bg-elv) !important;
+  transition: border-color 0.22s, box-shadow 0.22s, transform 0.22s !important;
+  padding: 20px 24px !important;
+}
+.VPFeature:hover {
+  border-color: var(--vp-c-brand-1) !important;
+  box-shadow: 0 4px 18px rgba(13, 122, 110, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+.VPFeature .title {
+  font-weight: 600 !important;
+  font-size: 1.05rem !important;
+  letter-spacing: -0.005em !important;
+}
+.VPFeature .details { line-height: 1.65 !important; }
+
+/* ─── Sidebar ────────────────────────────────────────────────── */
+.VPSidebar {
+  width: min(340px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  padding: 28px 20px 96px;
+  background-color: var(--vp-sidebar-bg-color) !important;
+  border-right: 1px solid var(--vp-c-divider) !important;
+}
+
+.VPSidebar .VPSidebarItem.level-0 > .item > .text {
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
+  margin-top: 1.2rem;
+}
+
+.VPSidebar .VPSidebarItem .item .link {
+  position: relative;
+  align-items: flex-start;
+  border-radius: 6px !important;
+  transition: background-color 0.18s, color 0.18s;
+  color: var(--vp-c-text-2) !important;
+  font-size: 0.9rem;
+  padding: 7px 12px !important;
+  margin: 1px 0;
+}
+
+.VPSidebar .VPSidebarItem .item .text {
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.VPSidebar .VPSidebarItem .item .link:hover {
+  color: var(--vp-c-text-1) !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.VPSidebar .VPSidebarItem.is-active > .item > .link {
+  color: var(--vp-c-text-1) !important;
+  font-weight: 600 !important;
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.VPSidebar .VPSidebarItem.is-active > .item > .link::before {
+  display: none !important;
+}
+
+.dark .VPSidebar .VPSidebarItem .item .link:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+.dark .VPSidebar .VPSidebarItem.is-active > .item > .link {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar tablet fix (768–959px) — from reference */
+@media (min-width: 768px) and (max-width: 959px) {
+  .VPNavBar.has-sidebar .container { max-width: 100%; }
+  .VPNavBar.has-sidebar .title {
+    position: absolute; top: 0; left: 0; z-index: 2;
+    padding: 0 32px;
+    width: var(--vp-sidebar-width);
+    height: var(--vp-nav-height);
+    background-color: transparent;
+  }
+  .VPNavBar.has-sidebar .content {
+    position: relative; z-index: 1;
+    padding-right: 32px;
+    padding-left: var(--vp-sidebar-width);
+  }
+  .VPNavBar.has-sidebar .divider { padding-left: var(--vp-sidebar-width); }
+  .VPNavBar:not(.home.top) .content-body {
+    position: relative;
+    background-color: var(--vp-nav-bg-color);
+  }
+  .VPNavBar:not(.has-sidebar):not(.home.top) .content-body { background-color: transparent; }
+  .VPContent { padding-top: var(--vp-nav-height); }
+  .VPContent.has-sidebar {
+    margin: var(--vp-layout-top-height, 0px) 0 0;
+    padding-left: var(--vp-sidebar-width);
+  }
+  .VPSidebar {
+    z-index: 25;
+    padding-top: var(--vp-nav-height);
+    width: var(--vp-sidebar-width);
+    max-width: 100%;
+    opacity: 1;
+    visibility: visible;
+    box-shadow: none;
+    transform: translateX(0);
+  }
+  .VPSidebar .curtain {
+    position: sticky; top: -64px; left: 0; z-index: 1;
+    margin-top: calc(var(--vp-nav-height) * -1);
+    margin-right: -32px; margin-left: -32px;
+    height: var(--vp-nav-height);
+    background-color: var(--vp-sidebar-bg-color);
+  }
+  .VPLocalNav { display: none; }
+}
+
+/* ─── Navbar ─────────────────────────────────────────────────── */
+.VPNav .VPNavBar {
+  background-color: var(--vp-nav-bg-color);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.VPNavBarTitle {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--vp-c-text-1);
+}
+
+.VPNavBarTitle .title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.VPNavBarTitle .logo {
+  height: 26px;
+  width: 26px;
+  border-radius: 0;
+}
+
+/* Nav link base */
+.VPNavBarMenuLink {
+  position: relative;
+  color: var(--vp-c-text-2) !important;
+  font-weight: 500 !important;
+  font-size: 0.92rem !important;
+  padding: 0 2px !important;
+  margin: 0 10px;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  transition: color 0.2s;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Active underline */
+.VPNavBarMenuLink.active:not([href*="huggingface"]):not([href*="github.com/Dash"]) {
+  color: var(--vp-c-text-1) !important;
+}
+.VPNavBarMenuLink.active:not([href*="huggingface"]):not([href*="github.com/Dash"])::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0; right: 0;
+  height: 2px;
+  background-color: var(--vp-c-text-1);
+}
+
+/* "▶ Try Demo" CTA pill */
+.VPNavBarMenuLink[href*="huggingface"] {
+  background-color: var(--vp-c-brand-1) !important;
+  color: #FFFFFF !important;
+  border-radius: 999px !important;
+  padding: 0 16px !important;
+  margin: 0 4px 0 8px !important;
+  height: 34px !important;
+  font-size: 0.87rem !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  align-self: center !important;
+  box-shadow: 0 1px 6px rgba(13, 122, 110, 0.3) !important;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease !important;
+}
+.VPNavBarMenuLink[href*="huggingface"]:hover {
+  background-color: var(--vp-c-brand-2) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 10px rgba(13, 122, 110, 0.5) !important;
+}
+.VPNavBarMenuLink[href*="huggingface"]::after { display: none !important; }
+
+/* Dark mode — same teal brand (not grey!) */
+.dark .VPNavBarMenuLink[href*="huggingface"] {
+  background-color: var(--vp-c-brand-1) !important;
+  color: #fff !important;
+  box-shadow: 0 1px 8px rgba(13, 122, 110, 0.5) !important;
+}
+.dark .VPNavBarMenuLink[href*="huggingface"]:hover {
+  background-color: var(--vp-c-brand-2) !important;
+  box-shadow: 0 2px 12px rgba(13, 122, 110, 0.65) !important;
+}
+
+/* GitHub social link pill */
+.VPNavBarSocialLink {
+  background-color: #1A1A1A !important;
+  color: #FFFFFF !important;
+  border-radius: 999px;
+  padding: 0 14px 0 10px !important;
+  height: 32px !important;
+  width: auto !important;
+  display: flex !important;
+  align-items: center;
+  text-decoration: none;
+  gap: 5px;
+  transition: background-color 0.2s;
+}
+.VPNavBarSocialLink:hover { background-color: #333 !important; }
+.VPNavBarSocialLink::after {
+  content: "GitHub";
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: var(--vp-font-family-base);
+}
+
+.dark .VPNavBarSocialLink {
+  background-color: #E5E5E5 !important;
+  color: #1A1A1A !important;
+}
+.dark .VPNavBarSocialLink:hover { background-color: #fff !important; }
+
+@media (min-width: 768px) {
+  .VPNavBarSocialLinks { display: flex !important; align-items: center; }
+}
+
+/* ─── Custom Containers ──────────────────────────────────────── */
+.vp-doc .custom-block {
+  border-radius: 10px;
+  margin: 20px 0;
+}
+.vp-doc .custom-block .custom-block-title { font-weight: 600; }
+
+/* ─── Card Grid (used in index pages) ───────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.card {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  padding: 20px;
+  background-color: var(--vp-c-bg-elv);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  text-decoration: none !important;
+  display: flex;
+  flex-direction: column;
+}
+.card:hover {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 4px 14px rgba(13, 122, 110, 0.08);
+  transform: translateY(-1px);
+}
+.dark .card:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); }
+
+.card h3 {
+  margin: 0 0 8px 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  color: var(--vp-c-text-1);
+  letter-spacing: -0.005em;
+}
+.card p {
+  margin: 0 !important;
+  font-size: 0.92rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+}
+.card .card-tag {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vp-c-brand-1);
+}
+
+/* ─── Mermaid ────────────────────────────────────────────────── */
+.vp-doc .mermaid {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 12px 0;
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  overflow-x: visible;
+  cursor: zoom-in;
+}
+.vp-doc .mermaid svg {
+  display: block;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: min(68vh, 760px) !important;
+  margin: 0 auto;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb {
+  background: var(--vp-c-brand-soft);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--vp-c-brand-1); }
+
+/* ─── Page Transitions ───────────────────────────────────────── */
+.VPContent { transition: background-color 0.28s; }
+
+/* ─── Hero Action Buttons (Welcome Page) ────────────────────── */
+.hero-actions {
+  display: flex;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+  margin: 1.75rem 0 0.5rem;
+}
+
+.hero-btn-primary,
+.hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1.375rem;
+  border-radius: 99px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--vp-font-family-base);
+  text-decoration: none !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  cursor: pointer;
+}
+
+.hero-btn-primary {
+  background: var(--vp-c-brand-1);
+  color: #fff !important;
+  box-shadow: 0 2px 12px rgba(13, 122, 110, 0.35);
+}
+.hero-btn-primary:hover {
+  background: var(--vp-c-brand-2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(13, 122, 110, 0.45);
+}
+
+.hero-btn-secondary {
+  background: transparent;
+  color: var(--vp-c-brand-1) !important;
+  border: 1.5px solid var(--vp-c-brand-1);
+}
+.hero-btn-secondary:hover {
+  background: var(--vp-c-brand-soft);
+  transform: translateY(-1px);
+}
+
+.dark .hero-btn-primary {
+  box-shadow: 0 2px 14px rgba(13, 122, 110, 0.5);
+}
+
+/* ─── Math / MathJax Rendering ──────────────────────────────── */
+
+/* Display math ($$...$$) — block-level, centred */
+.math-block,
+mjx-container[display="true"] {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-left: 3px solid var(--vp-c-brand-1);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1.05em;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Inline math ($...$) */
+.math-inline,
+mjx-container:not([display="true"]) {
+  display: inline;
+  font-size: 1em;
+  vertical-align: middle;
+}
+
+/* Dark mode adjustments */
+.dark .math-block,
+.dark mjx-container[display="true"] {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  border-left-color: var(--vp-c-brand-1);
+}
+
+/* MathJax SVG elements — inherit text colour properly */
+mjx-container svg {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+/* Prevent MathJax from overflowing narrow containers on mobile */
+@media (max-width: 640px) {
+  .math-block,
+  mjx-container[display="true"] {
+    padding: 0.875rem 1rem;
+    font-size: 0.95em;
+  }
+}
+
+
+/* ─── Restore native Prev / Next navigation ──────────────────── */
+/* (The VitePress built-in prev/next is kept — only the in-page manual links were removed) */
+.VPDocFooter {
+  border-top: 1px solid var(--vp-c-divider);
+  margin-top: 2rem;
+  padding-top: 1rem;
+}

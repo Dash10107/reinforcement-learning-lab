@@ -111,7 +111,7 @@ market-regime-detector-hmm/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd market-regime-detector-hmm
 pip install -r requirements.txt
 python app.py

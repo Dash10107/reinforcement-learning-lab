@@ -93,7 +93,7 @@ The key distinction is that A* minimises steps but not carbon. The DQN agent min
 
 Clone and install:
 
-    git clone https://github.com/yourusername/rl-portfolio
+    git clone https://github.com/yourusername/reinforcement-learning-lab
     cd green-logistics-optimizer
     pip install -r requirements.txt
 

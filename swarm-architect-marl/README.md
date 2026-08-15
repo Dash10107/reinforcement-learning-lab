@@ -112,7 +112,7 @@ swarm-architect-marl/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd swarm-architect-marl
 pip install -r requirements.txt
 python app.py

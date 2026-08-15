@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dash10107.github.io/reinforcement-learning-lab/sitemap.xml

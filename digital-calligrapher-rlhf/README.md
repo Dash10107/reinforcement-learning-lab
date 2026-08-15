@@ -107,7 +107,7 @@ The project is deliberately kept as a single file. The reward model, stroke gene
 Clone and install:
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd digital-calligrapher-rlhf
 pip install -r requirements.txt
 ```

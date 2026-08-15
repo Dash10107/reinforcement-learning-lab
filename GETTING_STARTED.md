@@ -24,8 +24,8 @@ If you see 3.10, 3.11, or 3.12 you are good. If you see 2.x or 3.9 or lower, ins
 ## Step 1 — Get the code
 
 ```bash
-git clone https://github.com/Dash10107/rl-portfolio
-cd rl-portfolio
+git clone https://github.com/Dash10107/reinforcement-learning-lab
+cd reinforcement-learning-lab
 ```
 
 Or if you are working directly from the folder on your machine, just open a terminal and navigate to the `ReinforcementLearning` directory.

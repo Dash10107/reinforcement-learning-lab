@@ -128,7 +128,7 @@ rl_maze_solver/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd rl_maze_solver
 pip install -r requirements.txt
 python app.py

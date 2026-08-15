@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dash10107/rl-portfolio/actions/workflows/lint.yml"><img src="https://github.com/Dash10107/rl-portfolio/actions/workflows/lint.yml/badge.svg" alt="Lint Status" /></a>
+  <a href="https://github.com/Dash10107/reinforcement-learning-lab/actions/workflows/lint.yml"><img src="https://github.com/Dash10107/reinforcement-learning-lab/actions/workflows/lint.yml/badge.svg" alt="Lint Status" /></a>
   <a href="https://huggingface.co/spaces/Dash10107"><img src="https://img.shields.io/badge/Hugging%20Face-Spaces-yellow?style=flat&logo=huggingface" alt="HuggingFace Spaces" /></a>
-  <a href="https://colab.research.google.com/github/Dash10107/rl-portfolio/blob/main/open_in_colab.ipynb"><img src="https://img.shields.io/badge/Colab-Open-orange?style=flat&logo=googlecolab&logoColor=white" alt="Open in Colab" /></a>
-  <a href="https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Dash10107/rl-portfolio"><img src="https://img.shields.io/badge/Codespaces-Open-blue?style=flat&logo=github&logoColor=white" alt="Open in Codespaces" /></a>
-  <a href="https://github.com/Dash10107/rl-portfolio/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat" alt="License" /></a>
-  <a href="https://github.com/Dash10107/rl-portfolio/stargazers"><img src="https://img.shields.io/badge/stars-%E2%98%85%20welcome-brightgreen?style=flat" alt="GitHub stars" /></a>
-  <a href="https://github.com/Dash10107/rl-portfolio/issues"><img src="https://img.shields.io/badge/issues-welcome-brightgreen?style=flat" alt="GitHub issues" /></a>
+  <a href="https://colab.research.google.com/github/Dash10107/reinforcement-learning-lab/blob/main/open_in_colab.ipynb"><img src="https://img.shields.io/badge/Colab-Open-orange?style=flat&logo=googlecolab&logoColor=white" alt="Open in Colab" /></a>
+  <a href="https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=Dash10107/reinforcement-learning-lab"><img src="https://img.shields.io/badge/Codespaces-Open-blue?style=flat&logo=github&logoColor=white" alt="Open in Codespaces" /></a>
+  <a href="https://github.com/Dash10107/reinforcement-learning-lab/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat" alt="License" /></a>
+  <a href="https://github.com/Dash10107/reinforcement-learning-lab/stargazers"><img src="https://img.shields.io/badge/stars-%E2%98%85%20welcome-brightgreen?style=flat" alt="GitHub stars" /></a>
+  <a href="https://github.com/Dash10107/reinforcement-learning-lab/issues"><img src="https://img.shields.io/badge/issues-welcome-brightgreen?style=flat" alt="GitHub issues" /></a>
 </p>
 
 # Reinforcement Learning Portfolio

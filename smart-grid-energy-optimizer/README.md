@@ -112,7 +112,7 @@ smart-grid-energy-optimizer/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd smart-grid-energy-optimizer
 pip install -r requirements.txt
 python app.py

@@ -126,7 +126,7 @@ rocket-lander-sac/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/rl-portfolio
+git clone https://github.com/yourusername/reinforcement-learning-lab
 cd rocket-lander-sac
 pip install -r requirements.txt
 python app.py

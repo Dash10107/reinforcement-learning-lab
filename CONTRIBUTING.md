@@ -37,8 +37,8 @@ To set up a local development environment, follow these steps:
 
 1.  **Fork and Clone the Repository**
     ```bash
-    git clone https://github.com/YOUR_USERNAME/rl-portfolio.git
-    cd rl-portfolio
+    git clone https://github.com/YOUR_USERNAME/reinforcement-learning-lab.git
+    cd reinforcement-learning-lab
     ```
 
 2.  **Set Up the Environment**
