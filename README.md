@@ -18,7 +18,7 @@ Learn Reinforcement Learning by Building.
 
 An interactive reinforcement learning course and lab featuring 12 end-to-end projects, each deployed as a runnable web application on Hugging Face Spaces. The projects span the full range of modern RL — from the simplest tabular methods that fit on a single page, to multi-agent coordination, model-based planning, and learning from human feedback.
 
-Every project is built to be understood by someone who is new to RL. Each has its own README explaining the algorithm, the environment, and what you are looking at when you run it.
+Every project is built to be understood by someone who is new to RL. **This is not just another code repository. It is a place where you can read the concept, see the math, inspect the implementation, run the algorithm, change parameters, and observe the result — all in one place.**
 
 ---
 
@@ -361,6 +361,26 @@ Then activate the environment before running any project:
 # Mac / Linux
 source .venv/bin/activate
 ```
+
+---
+
+## 🛠️ Build Your Own Project (Fork & Learn)
+
+The best way to learn Reinforcement Learning is to break it, modify it, and rebuild it. We encourage you to **fork this repository** and try completing the following challenges on your own:
+
+### Beginner Challenges
+- **Challenge 01**: Train the `rl_maze_solver` DQN agent to solve the classic `CartPole-v1` environment instead of a maze.
+- **Challenge 02**: Modify the epsilon-decay schedule in `mab-banner-optimizer` and observe how it impacts the UCB algorithm's convergence.
+
+### Intermediate Challenges
+- **Challenge 03**: Modify the PPO entropy coefficient in `swarm-architect-marl` and visualize the difference in agent exploration.
+- **Challenge 04**: Create your own custom reward function for the `rocket-lander-sac` that severely penalizes horizontal velocity, forcing a strictly vertical descent.
+
+### Advanced Challenges
+- **Challenge 05**: Swap the Bradley-Terry preference model in `digital-calligrapher-rlhf` for a different reward modeling technique (like DPO).
+- **Challenge 06**: Build a two-agent cooperative environment from scratch using the Independent PPO structure provided.
+
+If you build something cool, open a Pull Request or share it in the issues!
 
 ---
 
