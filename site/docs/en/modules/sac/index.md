@@ -2,7 +2,8 @@
 description: "Soft Actor-Critic (SAC) explained for continuous control. Covers maximum entropy objective, Gaussian policy, twin critics, Polyak averaging, and the reparameterisation trick."
 ---
 
-# When Actions Are a Number, Not a Button
+# SAC Explained — Soft Actor-Critic Tutorial
+<br> *When actions are a number, not a button.*
 
 A robot arm doesn't choose from a list. It outputs a precise angle — somewhere between -180 and 180 degrees. A rocket thruster doesn't pick "fire" or "don't fire." It decides how much thrust, from 0% to 100%.
 
@@ -25,25 +26,23 @@ class GaussianActor(nn.Module):
     def __init__(self, state_dim, action_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(state_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
+            nn.Linear(state_dim, 256), nn.ReLU(),
+            nn.Linear(256, 256),       nn.ReLU(),
         )
         self.mean_layer = nn.Linear(256, action_dim)
         self.log_std_layer = nn.Linear(256, action_dim)
 
     def forward(self, state):
         features = self.net(state)
-        mean = self.mean_layer(features)
+        mean    = self.mean_layer(features)
         log_std = self.log_std_layer(features).clamp(-20, 2)
-        std = log_std.exp()
+        std     = log_std.exp()
         return mean, std
 
     def sample(self, state):
         mean, std = self.forward(state)
-        dist = torch.distributions.Normal(mean, std)
-        action = dist.rsample()  # differentiable sample (reparameterisation trick)
+        dist   = torch.distributions.Normal(mean, std)
+        action = dist.rsample()       # differentiable sample (reparameterisation trick)
         log_prob = dist.log_prob(action).sum(dim=-1)
         # Squash to [-1, 1] using tanh
         action = torch.tanh(action)
@@ -88,7 +87,7 @@ SAC uses two critic networks instead of one. Both estimate the Q-value. When mak
 # Use the more pessimistic Q-value estimate
 q1 = critic1(state, action)
 q2 = critic2(state, action)
-q_target = torch.min(q1, q2)  # pessimistic: don't overestimate
+q_target = torch.min(q1, q2)   # pessimistic: don't overestimate
 ```
 
 This prevents a common failure mode called **overestimation bias**: a single critic tends to overestimate Q-values, which makes the actor chase illusory rewards. With two critics and a `min`, the estimates are more conservative and more accurate.
@@ -103,7 +102,9 @@ The target networks in SAC don't update by copying weights every N steps. They u
 # Soft update: move target a tiny fraction toward online network
 tau = 0.005
 for online_param, target_param in zip(online.parameters(), target.parameters()):
-    target_param.data.copy_(tau * online_param.data + (1 - tau) * target_param.data)
+    target_param.data.copy_(
+        tau * online_param.data + (1 - tau) * target_param.data
+    )
 ```
 
 At `tau = 0.005`, the target network moves 0.5% toward the online network each step. This is extremely gentle — the target barely changes at each step, giving training a very stable reference point. This is called **Polyak averaging**.

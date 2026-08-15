@@ -2,7 +2,8 @@
 description: "Policy Gradient Theorem explained from first principles. Covers REINFORCE, the log-probability trick, baseline variance reduction, advantage function, and why all modern RL uses policy gradients."
 ---
 
-# Why Learn the Policy Directly?
+# Policy Gradients Explained — Reinforcement Learning Math
+<br> *Why learn the policy directly?*
 
 Everything in Parts 1–3 learned a *value function* — a score for every (state, action) pair. The policy was derived from it: pick the action with the highest Q-value.
 
@@ -87,7 +88,7 @@ def reinforce_update(policy, optimizer, episode, gamma=0.99):
     # Policy gradient update
     loss = 0
     for log_prob, G in zip(episode.log_probs, returns):
-        loss -= log_prob * G  # negative because we do gradient ascent
+        loss -= log_prob * G    # negative because we do gradient ascent
 
     optimizer.zero_grad()
     loss.backward()

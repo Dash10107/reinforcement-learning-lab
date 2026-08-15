@@ -2,7 +2,8 @@
 description: "RLHF (Reinforcement Learning from Human Feedback) explained — the technique behind ChatGPT and Claude. Covers Bradley-Terry preference model, reward model training, KL penalty, and DPO."
 ---
 
-# Teaching AI What You Actually Want
+# RLHF Explained — Reinforcement Learning from Human Feedback
+<br> *Teaching AI what you actually want.*
 
 You can't write down a reward function for "this is beautiful."
 
@@ -33,19 +34,16 @@ class RewardModel(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),  # scalar reward
+            nn.Linear(input_dim, 256), nn.ReLU(),
+            nn.Linear(256, 128),       nn.ReLU(),
+            nn.Linear(128, 1),         # scalar reward
         )
 
     def forward(self, x):
         return self.net(x).squeeze(-1)
 
-
 def preference_loss(reward_model, chosen, rejected):
-    r_chosen = reward_model(chosen)
+    r_chosen   = reward_model(chosen)
     r_rejected = reward_model(rejected)
     # The chosen output should score higher than the rejected one
     return -F.logsigmoid(r_chosen - r_rejected).mean()

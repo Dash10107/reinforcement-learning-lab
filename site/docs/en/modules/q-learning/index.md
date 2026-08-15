@@ -2,7 +2,8 @@
 description: "Q-Learning and SARSA explained from scratch. Learn the Bellman optimality equation, on-policy vs off-policy learning, Q-table construction, and convergence conditions with Python code."
 ---
 
-# Teaching an Agent to Remember
+# Q-Learning From Scratch — Reinforcement Learning Tutorial
+<br> *Teaching an agent to remember.*
 
 The agent tried going right. It hit a wall.
 
@@ -54,7 +55,7 @@ In code:
 
 ```python
 def update(state, action, reward, next_state, done):
-    best_next = np.max(Q[next_state])  # best option from next state
+    best_next = np.max(Q[next_state])              # best option from next state
     target = reward + gamma * best_next * (not done)
     Q[state, action] += alpha * (target - Q[state, action])
 ```

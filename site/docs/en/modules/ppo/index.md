@@ -2,7 +2,8 @@
 description: "PPO (Proximal Policy Optimization) explained — the algorithm behind ChatGPT, OpenAI Five, and robotics. Covers clipping trick, full PPO objective with math, and comparison to TRPO."
 ---
 
-# PPO — The Algorithm Behind Modern AI
+# PPO Explained — Proximal Policy Optimization Tutorial
+<br> *The algorithm behind modern AI.*
 
 PPO is behind most of the biggest RL results in the last five years.
 

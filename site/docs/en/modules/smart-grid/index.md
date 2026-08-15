@@ -1,4 +1,5 @@
 # Smart Grid Energy (DQN Project)
+<br> *Applying DQN to dynamic prices.*
 
 This project is covered in **[Chapter 5 — When the Maze Gets Too Big](../dqn/)**.
 

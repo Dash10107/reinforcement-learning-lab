@@ -2,7 +2,8 @@
 description: "Multi-Agent Reinforcement Learning (MARL) explained. Covers IPPO, Nash equilibrium, non-stationarity, CTDE architecture, and QMIX monotonic mixing for cooperative settings."
 ---
 
-# What Happens When There Are Two of You?
+# Multi-Agent Reinforcement Learning (MARL) Explained
+<br> *What happens when there are two of you?*
 
 Everything we've built so far has one agent, one environment.
 
@@ -41,7 +42,8 @@ for agent_id in range(n_agents):
     value = critics[agent_id](obs)
 
     # Each agent updates using its own experience
-    ppo_update(actors[agent_id], critics[agent_id], agent_trajectories[agent_id])
+    ppo_update(actors[agent_id], critics[agent_id],
+               agent_trajectories[agent_id])
 ```
 
 The surprising thing: this works. Not always, and not optimally — but in many cooperative settings, independent agents that each optimise their own reward end up cooperating anyway, because cooperation is often the best individual strategy.

@@ -2,7 +2,8 @@
 description: "Temporal Difference (TD) learning explained — TD(0), n-step returns, and TD(λ). Learn how TD unifies Monte Carlo and Q-Learning, and how eligibility traces work."
 ---
 
-# Temporal Difference Learning
+# Temporal Difference (TD) Learning Tutorial
+<br> *Learning from the next step.*
 
 Monte Carlo waits until the end of an episode. Q-Learning updates every single step. Both work. But why are they so different? And is there something in between?
 
@@ -87,11 +88,11 @@ def n_step_return(rewards, V, next_state, gamma, n):
     """Compute n-step return from a list of rewards."""
     G = 0
     for i, r in enumerate(rewards[:n]):
-        G += (gamma**i) * r
+        G += (gamma ** i) * r
 
     # Bootstrap from the value at step n
     if len(rewards) >= n:
-        G += (gamma**n) * V[next_state]
+        G += (gamma ** n) * V[next_state]
 
     return G
 ```

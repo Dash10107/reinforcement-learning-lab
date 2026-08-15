@@ -1,4 +1,5 @@
-# When No One Planned It
+# Independent PPO (IPPO) — Cooperative MARL Tutorial
+<br> *When no one planned it.*
 
 Nobody told the agents to form a ring around the landmark.
 

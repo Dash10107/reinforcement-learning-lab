@@ -1,4 +1,5 @@
 # Green Logistics (DQN Project)
+<br> *Applying DQN to spatial planning.*
 
 This project is covered in **[Chapter 5 — When the Maze Gets Too Big](../dqn/)**.
 

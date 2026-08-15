@@ -2,7 +2,8 @@
 description: "Learn the Markov Decision Process (MDP) — the formal framework behind all reinforcement learning. Covers states, actions, rewards, policies, value functions, and Bellman equations with plain English explanations."
 ---
 
-# The MDP Framework
+# Markov Decision Processes (MDP) Explained — RL Framework
+<br> *The math behind the decisions.*
 
 Every reinforcement learning algorithm you'll ever encounter is solving the same underlying problem.
 

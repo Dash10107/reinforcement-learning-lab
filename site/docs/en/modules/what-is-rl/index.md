@@ -2,7 +2,8 @@
 description: "What is reinforcement learning? Learn the five core components: agent, environment, state, action, and reward. Understand the explore-exploit tradeoff and how RL differs from supervised learning."
 ---
 
-# What Is an Agent?
+# What is Reinforcement Learning? — An Introduction
+<br> *What is an agent?*
 
 Imagine you wake up in a room you've never seen before.
 

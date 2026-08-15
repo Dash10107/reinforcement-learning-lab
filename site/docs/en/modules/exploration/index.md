@@ -2,7 +2,8 @@
 description: "Learn smarter exploration strategies beyond epsilon-greedy. Covers Upper Confidence Bound (UCB) with full derivation, Thompson Sampling with Beta distributions, and regret comparison."
 ---
 
-# Smarter Ways to Explore
+# Exploration Strategies in RL — Epsilon-Greedy, UCB, and Thompson
+<br> *Smarter ways to explore.*
 
 Epsilon-greedy has a flaw.
 
@@ -45,7 +46,6 @@ The key term is $\sqrt{\ln t / N(a)}$.
 ```python
 import numpy as np
 
-
 def ucb_action(Q, N, t, c=2.0):
     # Avoid division by zero: any arm with N=0 has infinite bonus
     # (we should always try an untried arm first)
@@ -78,11 +78,10 @@ At each step, sample one value from each arm's distribution, then pick the arm t
 ```python
 import numpy as np
 
-
 class ThompsonSampling:
     def __init__(self, n_arms):
-        self.alpha = np.ones(n_arms)  # successes + 1
-        self.beta = np.ones(n_arms)  # failures  + 1
+        self.alpha = np.ones(n_arms)   # successes + 1
+        self.beta  = np.ones(n_arms)   # failures  + 1
 
     def choose(self):
         # Sample from each arm's Beta distribution
@@ -90,8 +89,8 @@ class ThompsonSampling:
         return int(np.argmax(samples))
 
     def update(self, arm, reward):
-        self.alpha[arm] += reward  # success
-        self.beta[arm] += 1 - reward  # failure
+        self.alpha[arm] += reward       # success
+        self.beta[arm]  += (1 - reward) # failure
 ```
 
 Why does this work? Initially, all Beta(1,1) distributions are flat — uniform, meaning total uncertainty. Any arm is equally likely to sample high. As you try each arm, the distribution for that arm narrows around its true value. Arms you know are bad have narrow distributions peaked near 0 — they almost never sample high. Arms you've barely tried have wide, flat distributions that sometimes sample high — and when they do, you explore them.

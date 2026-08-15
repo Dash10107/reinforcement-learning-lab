@@ -2,7 +2,8 @@
 description: "Deep Q-Network (DQN) explained — how neural networks replace Q-tables for large state spaces. Covers experience replay, target networks, Double DQN, and the formal TD loss function."
 ---
 
-# When the Maze Gets Too Big
+# DQN Explained — Deep Q-Network Tutorial
+<br> *When the maze gets too big.*
 
 A 5×5 maze has 25 states. Your Q-table has 25 rows.
 A 20×20 maze has 400 states. Still fine.
@@ -50,7 +51,6 @@ The network itself is simple:
 import torch
 import torch.nn as nn
 
-
 class DQN(nn.Module):
     def __init__(self, state_dim, n_actions):
         super().__init__()
@@ -59,11 +59,11 @@ class DQN(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, n_actions),  # one Q-value per action
+            nn.Linear(128, n_actions),   # one Q-value per action
         )
 
     def forward(self, state):
-        return self.net(state)  # returns Q-values for all actions
+        return self.net(state)           # returns Q-values for all actions
 ```
 
 Input: the current state. Output: one Q-value for each possible action. Pick the action with the highest Q-value. That's it.
@@ -86,12 +86,10 @@ Instead of training on what just happened, the agent stores its experiences in a
 from collections import deque
 import random
 
-replay_buffer = deque(maxlen=10_000)  # circular buffer, oldest discarded
-
+replay_buffer = deque(maxlen=10_000)   # circular buffer, oldest discarded
 
 def store(state, action, reward, next_state, done):
     replay_buffer.append((state, action, reward, next_state, done))
-
 
 def sample_batch(batch_size=64):
     return random.sample(replay_buffer, batch_size)

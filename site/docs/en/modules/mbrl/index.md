@@ -2,7 +2,8 @@
 description: "Model-Based Reinforcement Learning (MBRL) explained. Covers world models, Model Predictive Control (MPC), Dyna-Q algorithm, ensemble uncertainty, and sample efficiency comparison."
 ---
 
-# What If the Agent Could Imagine?
+# Model-Based RL Tutorial — Ensemble Models and MPC
+<br> *What if the agent could imagine?*
 
 Every algorithm in this course so far has been **model-free**.
 
@@ -25,18 +26,16 @@ class WorldModel(nn.Module):
     def __init__(self, state_dim, action_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(state_dim + action_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, state_dim + 1),  # predict next_state + reward
+            nn.Linear(state_dim + action_dim, 256), nn.ReLU(),
+            nn.Linear(256, 256),                     nn.ReLU(),
+            nn.Linear(256, state_dim + 1),           # predict next_state + reward
         )
 
     def forward(self, state, action):
         x = torch.cat([state, action], dim=-1)
         out = self.net(x)
         next_state = out[..., :-1]
-        reward = out[..., -1:]
+        reward     = out[..., -1:]
         return next_state, reward
 ```
 
@@ -54,7 +53,7 @@ def mpc_action(world_model, state, n_candidates=100, horizon=10):
     candidates = torch.randn(n_candidates, horizon, action_dim)
 
     # Simulate each candidate in the world model
-    best_return, best_first_action = float("-inf"), None
+    best_return, best_first_action = float('-inf'), None
 
     for i in range(n_candidates):
         s = state.clone()
@@ -62,13 +61,13 @@ def mpc_action(world_model, state, n_candidates=100, horizon=10):
         for t in range(horizon):
             action = candidates[i, t]
             s, r = world_model(s, action)
-            total_reward += (gamma**t) * r
+            total_reward += (gamma ** t) * r
 
         if total_reward > best_return:
             best_return = total_reward
             best_first_action = candidates[i, 0]
 
-    return best_first_action  # only execute the first step; re-plan next step
+    return best_first_action   # only execute the first step; re-plan next step
 ```
 
 Notice: MPC doesn't learn a policy in the traditional sense. It plans from scratch at every single step. This is slow at runtime but extremely flexible — it can adapt immediately to changes in the environment.
@@ -86,9 +85,9 @@ Before neural world models, **Dyna-Q** (Sutton, 1990) was the canonical model-ba
 ```python
 class DynaQ:
     def __init__(self, n_states, n_actions, planning_steps=10):
-        self.Q = np.zeros((n_states, n_actions))
-        self.model = {}  # stores: (state, action) -> (reward, next_state)
-        self.n = planning_steps
+        self.Q     = np.zeros((n_states, n_actions))
+        self.model = {}        # stores: (state, action) -> (reward, next_state)
+        self.n     = planning_steps
 
     def update(self, s, a, r, s_next, alpha=0.1, gamma=0.99):
         # 1. Real Q-learning update
