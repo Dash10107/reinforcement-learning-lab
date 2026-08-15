@@ -3,25 +3,29 @@ Data download, cleaning, and feature engineering for market regime detection.
 """
 
 from __future__ import annotations
+
 import warnings
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
-from functools import lru_cache
-
 
 # ── Download ──────────────────────────────────────────────────────────────────
+
 
 def fetch_ohlcv(ticker: str, start: str, end: str) -> pd.DataFrame:
     """Download OHLCV data, flatten MultiIndex, return clean DataFrame."""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        raw = yf.download(ticker, start=start, end=end,
-                          auto_adjust=True, progress=False)
+        raw = yf.download(
+            ticker, start=start, end=end, auto_adjust=True, progress=False
+        )
 
     if raw.empty:
-        raise ValueError(f"No data returned for '{ticker}' in {start}→{end}. "
-                         "Check the ticker symbol.")
+        raise ValueError(
+            f"No data returned for '{ticker}' in {start}→{end}. "
+            "Check the ticker symbol."
+        )
 
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
@@ -38,11 +42,12 @@ def fetch_ohlcv(ticker: str, start: str, end: str) -> pd.DataFrame:
 
 # ── Feature engineering ───────────────────────────────────────────────────────
 
+
 def _rsi(series: pd.Series, window: int = 14) -> pd.Series:
     delta = series.diff()
-    gain  = delta.clip(lower=0).rolling(window).mean()
-    loss  = (-delta.clip(upper=0)).rolling(window).mean()
-    rs    = gain / loss.replace(0, np.nan)
+    gain = delta.clip(lower=0).rolling(window).mean()
+    loss = (-delta.clip(upper=0)).rolling(window).mean()
+    rs = gain / loss.replace(0, np.nan)
     return (100 - 100 / (1 + rs)).fillna(50)  # neutral fill
 
 
@@ -59,12 +64,12 @@ def build_features(df: pd.DataFrame, vol_window: int = 20) -> pd.DataFrame:
     out = pd.DataFrame(index=df.index)
     close = df["Close"]
 
-    out["log_ret"]     = np.log(close / close.shift(1))
-    out["volatility"]  = out["log_ret"].rolling(vol_window).std() * np.sqrt(252)
+    out["log_ret"] = np.log(close / close.shift(1))
+    out["volatility"] = out["log_ret"].rolling(vol_window).std() * np.sqrt(252)
     out["momentum_5d"] = np.log(close / close.shift(5))
-    out["rsi"]         = (_rsi(close) - 50) / 50   # [-1, 1]
+    out["rsi"] = (_rsi(close) - 50) / 50  # [-1, 1]
 
-    out["close"]  = close
+    out["close"] = close
     out["volume"] = df.get("Volume", pd.Series(dtype=float))
 
     return out.dropna()
@@ -74,10 +79,10 @@ def build_features(df: pd.DataFrame, vol_window: int = 20) -> pd.DataFrame:
 
 REGIME_LABELS = {0: "🐂 Bull", 1: "⚖️ Neutral", 2: "🐻 Bear", 3: "💥 Crisis"}
 REGIME_COLORS = {
-    "🐂 Bull":    "#00d4aa",
+    "🐂 Bull": "#00d4aa",
     "⚖️ Neutral": "#faad14",
-    "🐻 Bear":    "#ef4444",
-    "💥 Crisis":  "#7c3aed",
+    "🐻 Bear": "#ef4444",
+    "💥 Crisis": "#7c3aed",
 }
 DEFAULT_COLOR = "#64748b"
 
@@ -90,8 +95,8 @@ def label_regimes(feat: pd.DataFrame, regime_col: str = "regime") -> pd.DataFram
     regimes = sorted(feat[regime_col].unique())
     n = len(regimes)
 
-    means    = {r: feat.loc[feat[regime_col] == r, "log_ret"].mean() for r in regimes}
-    vols     = {r: feat.loc[feat[regime_col] == r, "volatility"].mean() for r in regimes}
+    means = {r: feat.loc[feat[regime_col] == r, "log_ret"].mean() for r in regimes}
+    vols = {r: feat.loc[feat[regime_col] == r, "volatility"].mean() for r in regimes}
 
     # Sort by mean return
     sorted_by_ret = sorted(regimes, key=lambda r: means[r], reverse=True)
@@ -118,7 +123,7 @@ def label_regimes(feat: pd.DataFrame, regime_col: str = "regime") -> pd.DataFram
                     label_map[r] = "🐻 Bear"
     else:
         for i, r in enumerate(sorted_by_ret):
-            key = list(REGIME_LABELS.values())[min(i, len(REGIME_LABELS)-1)]
+            key = list(REGIME_LABELS.values())[min(i, len(REGIME_LABELS) - 1)]
             label_map[r] = key
 
     feat = feat.copy()
@@ -132,47 +137,55 @@ def regime_statistics(feat: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for label in feat["regime_label"].unique():
         sub = feat[feat["regime_label"] == label]
-        ann_ret  = sub["log_ret"].mean() * 252
-        ann_vol  = sub["log_ret"].std()  * np.sqrt(252)
-        sharpe   = ann_ret / ann_vol if ann_vol > 0 else 0.0
+        ann_ret = sub["log_ret"].mean() * 252
+        ann_vol = sub["log_ret"].std() * np.sqrt(252)
+        sharpe = ann_ret / ann_vol if ann_vol > 0 else 0.0
         pct_time = len(sub) / len(feat) * 100
 
         # Max drawdown within regime
         cum = np.exp(sub["log_ret"].cumsum())
         if len(cum) > 0:
             roll_max = cum.expanding().max()
-            dd       = (cum / roll_max - 1).min()
+            dd = (cum / roll_max - 1).min()
         else:
             dd = 0.0
 
         # Avg duration
         rle = (feat["regime_label"] != feat["regime_label"].shift()).cumsum()
-        durations = feat[feat["regime_label"] == label].groupby(rle[feat["regime_label"] == label]).size()
+        durations = (
+            feat[feat["regime_label"] == label]
+            .groupby(rle[feat["regime_label"] == label])
+            .size()
+        )
         avg_dur = durations.mean() if len(durations) else 0
 
-        rows.append({
-            "Regime":         label,
-            "Ann. Return":    f"{ann_ret*100:+.2f}%",
-            "Ann. Volatility":f"{ann_vol*100:.2f}%",
-            "Sharpe Ratio":   f"{sharpe:.2f}",
-            "Max Drawdown":   f"{dd*100:.2f}%",
-            "% of Time":      f"{pct_time:.1f}%",
-            "Avg Duration":   f"{avg_dur:.1f} days",
-            "_color":         REGIME_COLORS.get(label, DEFAULT_COLOR),
-        })
+        rows.append(
+            {
+                "Regime": label,
+                "Ann. Return": f"{ann_ret * 100:+.2f}%",
+                "Ann. Volatility": f"{ann_vol * 100:.2f}%",
+                "Sharpe Ratio": f"{sharpe:.2f}",
+                "Max Drawdown": f"{dd * 100:.2f}%",
+                "% of Time": f"{pct_time:.1f}%",
+                "Avg Duration": f"{avg_dur:.1f} days",
+                "_color": REGIME_COLORS.get(label, DEFAULT_COLOR),
+            }
+        )
 
     return pd.DataFrame(rows)
 
 
-def transition_matrix(feat: pd.DataFrame, n_regimes: int, label_map: dict) -> pd.DataFrame:
+def transition_matrix(
+    feat: pd.DataFrame, n_regimes: int, label_map: dict
+) -> pd.DataFrame:
     """Compute observed regime transition matrix."""
-    rev_map = {v: k for k, v in label_map.items()}
-    labels_sorted = sorted(feat["regime_label"].unique())
+    rev_map = {v: k for k, v in label_map.items()}  # noqa: F841
+    labels_sorted = sorted(feat["regime_label"].unique())  # noqa: F841
 
     seq = feat["regime"].values
     T = np.zeros((n_regimes, n_regimes))
     for i in range(len(seq) - 1):
-        T[seq[i], seq[i+1]] += 1
+        T[seq[i], seq[i + 1]] += 1
     row_sums = T.sum(axis=1, keepdims=True)
     T = np.where(row_sums > 0, T / row_sums, 0)
 

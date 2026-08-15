@@ -8,16 +8,18 @@ A full multi-agent reinforcement learning warehouse simulation:
 """
 
 from __future__ import annotations
-import os
-import numpy as np
-import gradio as gr
 
-from warehouse.env import WarehouseEnv, N_ACTIONS
-from warehouse.renderer import render_frame, frames_to_gif
+import gradio as gr
+import numpy as np
 from agents.ippo import (
-    WarehouseIPPO, TrainingState, start_training, CHECKPOINT,
+    CHECKPOINT,
+    TrainingState,
+    WarehouseIPPO,
+    start_training,
 )
-from viz.charts import training_dashboard, comparison_chart, empty_fig
+from viz.charts import comparison_chart, training_dashboard
+from warehouse.env import N_ACTIONS, WarehouseEnv
+from warehouse.renderer import frames_to_gif, render_frame
 
 # ── Global state ──────────────────────────────────────────────────────────────
 _train_state = TrainingState()
@@ -36,7 +38,7 @@ def _get_ippo(n_robots: int) -> WarehouseIPPO | None:
 
 def _run_episode(
     n_robots: int,
-    policy: str,          # "trained" | "random" | "greedy" | "noop"
+    policy: str,  # "trained" | "random" | "greedy" | "noop"
     max_steps: int = 100,
     seed: int = 0,
     fps: int = 10,
@@ -48,7 +50,12 @@ def _run_episode(
     if policy == "trained":
         ippo = _get_ippo(n_robots)
         if ippo is None:
-            return None, {"deliveries": 0, "collisions": 0, "reward": 0.0, "error": "no_model"}
+            return None, {
+                "deliveries": 0,
+                "collisions": 0,
+                "reward": 0.0,
+                "error": "no_model",
+            }
 
     frames = []
     trails: list[list[tuple[int, int]]] = [[] for _ in range(n_robots)]
@@ -62,7 +69,9 @@ def _run_episode(
                 trails[i].pop(0)
 
         frame = render_frame(
-            env.grid, env.robots, trails=trails,
+            env.grid,
+            env.robots,
+            trails=trails,
             step=step,
             deliveries=env.total_deliveries,
             collisions=env.total_collisions,
@@ -91,7 +100,7 @@ def _run_episode(
         else:  # random
             actions = [int(np.random.randint(N_ACTIONS)) for _ in range(n_robots)]
 
-        obs, rewards, done, info = env.step(actions)
+        obs, rewards, done, info = env.step(actions)  # noqa: RUF059
         total_rewards += sum(rewards)
         if done:
             break
@@ -106,20 +115,24 @@ def _run_episode(
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
 
-def cb_run_sim(n_robots, policy_label, fps,
-               progress: gr.Progress = gr.Progress()):
+
+def cb_run_sim(n_robots, policy_label, fps, progress: gr.Progress = gr.Progress()):  # noqa: B008
     policy_map = {
         "🤖 Trained (IPPO)": "trained",
-        "🎲 Random":          "random",
-        "➡️ Greedy":          "greedy",
+        "🎲 Random": "random",
+        "➡️ Greedy": "greedy",
     }
     policy = policy_map[policy_label]
     progress(0.1, desc="Initialising warehouse…")
-    gif, stats = _run_episode(int(n_robots), policy, max_steps=100, seed=42, fps=int(fps))
+    gif, stats = _run_episode(
+        int(n_robots), policy, max_steps=100, seed=42, fps=int(fps)
+    )
     progress(0.9, desc="Building GIF…")
 
     if gif is None and stats.get("error") == "no_model":
-        status_md = "❌ **No trained model found.** Train agents first in the **Train** tab."
+        status_md = (
+            "❌ **No trained model found.** Train agents first in the **Train** tab."
+        )
         return None, status_md
 
     status_md = f"""
@@ -129,9 +142,9 @@ def cb_run_sim(n_robots, policy_label, fps,
 |---|---|
 | **Strategy** | {policy_label} |
 | **Robots** | {n_robots} |
-| **Deliveries** | `{stats['deliveries']}` |
-| **Collisions** | `{stats['collisions']}` |
-| **Total Reward** | `{stats['reward']:+.2f}` |
+| **Deliveries** | `{stats["deliveries"]}` |
+| **Collisions** | `{stats["collisions"]}` |
+| **Total Reward** | `{stats["reward"]:+.2f}` |
 """
     progress(1.0)
     return gif, status_md
@@ -162,7 +175,7 @@ def cb_refresh_train():
     return fig, _train_state.status
 
 
-def cb_benchmark(n_robots, progress: gr.Progress = gr.Progress()):
+def cb_benchmark(n_robots, progress: gr.Progress = gr.Progress()):  # noqa: B008
     results = {}
     n = int(n_robots)
     seed = 99
@@ -170,8 +183,12 @@ def cb_benchmark(n_robots, progress: gr.Progress = gr.Progress()):
     progress(0.1, desc="Running IPPO…")
     _, stats = _run_episode(n, "trained", seed=seed)
     if stats.get("error"):
-        results["IPPO (trained)"] = {"deliveries": 0, "collisions": 0, "reward": 0.0,
-                                      "note": "⚠️ Not trained"}
+        results["IPPO (trained)"] = {
+            "deliveries": 0,
+            "collisions": 0,
+            "reward": 0.0,
+            "note": "⚠️ Not trained",
+        }
     else:
         results["IPPO (trained)"] = stats
 
@@ -305,7 +322,6 @@ footer { display:none !important; }
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
-
     gr.HTML("""
     <div class="wh-header">
         <div class="wh-title">📦 MARL Warehouse Coordinator</div>
@@ -323,7 +339,6 @@ with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
     """)
 
     with gr.Tabs():
-
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Live Simulation
         # ══════════════════════════════════════════════════════════════════
@@ -345,16 +360,18 @@ with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, min_width=280):
-                    sim_robots  = gr.Slider(2, 6, value=4, step=1,
-                                            label="Number of robots")
-                    sim_policy  = gr.Radio(
+                    sim_robots = gr.Slider(
+                        2, 6, value=4, step=1, label="Number of robots"
+                    )
+                    sim_policy = gr.Radio(
                         ["🤖 Trained (IPPO)", "🎲 Random", "➡️ Greedy"],
                         value="🎲 Random",
                         label="Robot strategy",
                     )
-                    sim_fps     = gr.Slider(5, 20, value=10, step=1,
-                                            label="Animation speed (fps)")
-                    btn_sim     = gr.Button("▶ RUN SIMULATION", variant="primary")
+                    sim_fps = gr.Slider(
+                        5, 20, value=10, step=1, label="Animation speed (fps)"
+                    )
+                    btn_sim = gr.Button("▶ RUN SIMULATION", variant="primary")
 
                     gr.HTML("""
                     <div style="background:#161b22;border:1px solid #21262d;
@@ -374,11 +391,14 @@ with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
                     """)
 
                 with gr.Column(scale=1):
-                    sim_gif    = gr.Image(label="Warehouse Replay", type="filepath", height=380)
+                    sim_gif = gr.Image(
+                        label="Warehouse Replay", type="filepath", height=380
+                    )
                     sim_status = gr.Markdown("*Click Run Simulation to start.*")
 
-            btn_sim.click(cb_run_sim, [sim_robots, sim_policy, sim_fps],
-                          [sim_gif, sim_status])
+            btn_sim.click(
+                cb_run_sim, [sim_robots, sim_policy, sim_fps], [sim_gif, sim_status]
+            )
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 2 — Train Agents
@@ -400,19 +420,23 @@ with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1):
-                    train_robots  = gr.Slider(2, 6, value=4, step=1,
-                                              label="Number of robots")
-                    train_eps     = gr.Slider(50, 1000, value=200, step=50,
-                                              label="Training episodes")
-                    train_rollout = gr.Slider(50, 200, value=100, step=50,
-                                              label="Steps per episode")
-                    train_lr      = gr.Slider(1e-5, 1e-3, value=3e-4, step=1e-5,
-                                              label="Learning rate")
+                    train_robots = gr.Slider(
+                        2, 6, value=4, step=1, label="Number of robots"
+                    )
+                    train_eps = gr.Slider(
+                        50, 1000, value=200, step=50, label="Training episodes"
+                    )
+                    train_rollout = gr.Slider(
+                        50, 200, value=100, step=50, label="Steps per episode"
+                    )
+                    train_lr = gr.Slider(
+                        1e-5, 1e-3, value=3e-4, step=1e-5, label="Learning rate"
+                    )
                     with gr.Row():
-                        btn_train   = gr.Button("▶ START TRAINING", variant="primary")
-                        btn_stop    = gr.Button("⏹ STOP", variant="stop")
+                        btn_train = gr.Button("▶ START TRAINING", variant="primary")
+                        btn_stop = gr.Button("⏹ STOP", variant="stop")
                     btn_refresh = gr.Button("🔄 REFRESH METRICS", variant="secondary")
-                    train_msg   = gr.Textbox(label="Status", lines=2, interactive=False)
+                    train_msg = gr.Textbox(label="Status", lines=2, interactive=False)
 
                     gr.HTML("""
                     <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;
@@ -435,12 +459,16 @@ with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
                     """)
 
                 with gr.Column(scale=2):
-                    train_status_md = gr.Markdown("*Start training to see live metrics.*")
+                    train_status_md = gr.Markdown(
+                        "*Start training to see live metrics.*"
+                    )
                     train_fig = gr.Plot(label="Training Dashboard")
 
-            btn_train.click(cb_start_train,
-                            [train_robots, train_eps, train_rollout, train_lr],
-                            [train_msg])
+            btn_train.click(
+                cb_start_train,
+                [train_robots, train_eps, train_rollout, train_lr],
+                [train_msg],
+            )
             btn_stop.click(cb_stop_train, outputs=[train_msg])
             btn_refresh.click(cb_refresh_train, outputs=[train_fig, train_status_md])
 
@@ -462,11 +490,15 @@ with gr.Blocks(title="MARL Warehouse Coordinator") as demo:
             """)
 
             with gr.Row():
-                bench_robots = gr.Slider(2, 6, value=4, step=1, label="Number of robots")
-                btn_bench    = gr.Button("🏁 RUN BENCHMARK", variant="primary")
+                bench_robots = gr.Slider(
+                    2, 6, value=4, step=1, label="Number of robots"
+                )
+                btn_bench = gr.Button("🏁 RUN BENCHMARK", variant="primary")
 
-            bench_fig     = gr.Plot(label="Strategy Comparison")
-            bench_summary = gr.Markdown("*Click Run Benchmark to compare all strategies.*")
+            bench_fig = gr.Plot(label="Strategy Comparison")
+            bench_summary = gr.Markdown(
+                "*Click Run Benchmark to compare all strategies.*"
+            )
 
             btn_bench.click(cb_benchmark, [bench_robots], [bench_fig, bench_summary])
 

@@ -1,6 +1,7 @@
-import numpy as np
-from dataclasses import dataclass, field
 from collections import deque
+from dataclasses import dataclass, field
+
+import numpy as np
 
 
 @dataclass
@@ -55,6 +56,7 @@ def evaluate_agents(env, agents: dict, n_episodes: int = 5) -> dict:
             actions = {}
             for aid, agent in agents.items():
                 import numpy as np
+
                 obs = obs_dict.get(aid, np.zeros(agent.actor.net[0].in_features))
                 actions[aid] = agent.greedy_action(obs)
 
@@ -69,7 +71,9 @@ def evaluate_agents(env, agents: dict, n_episodes: int = 5) -> dict:
         episode_lengths.append(ep_len)
 
     return {
-        "mean_reward_per_agent": {aid: v / n_episodes for aid, v in total_rewards.items()},
+        "mean_reward_per_agent": {
+            aid: v / n_episodes for aid, v in total_rewards.items()
+        },
         "mean_episode_length": np.mean(episode_lengths),
         "team_reward": sum(total_rewards.values()) / n_episodes,
     }

@@ -9,17 +9,23 @@ Compares three strategies on the same city scenario:
 """
 
 from __future__ import annotations
-import gradio as gr
-import numpy as np
 
-from core.env import GreenCityEnv, PRESETS, parse_congestion
+import gradio as gr
 from core.agents import (
-    RouteResult, TrainingState,
-    run_dqn, run_greedy, run_astar, start_training,
+    RouteResult,
+    TrainingState,
+    run_astar,
+    run_dqn,
+    run_greedy,
+    start_training,
 )
+from core.env import PRESETS, GreenCityEnv, parse_congestion
 from viz.charts import (
-    city_map, carbon_trace, performance_radar,
-    training_curve, empty_fig,
+    carbon_trace,
+    city_map,
+    empty_fig,
+    performance_radar,
+    training_curve,
 )
 
 # ── Shared training state ─────────────────────────────────────────────────────
@@ -28,14 +34,16 @@ _train_state = TrainingState()
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _make_env(size, start_y, start_x, goal_y, goal_x,
-              congestion_text, vehicle) -> GreenCityEnv:
-    size  = int(size)
+
+def _make_env(
+    size, start_y, start_x, goal_y, goal_x, congestion_text, vehicle
+) -> GreenCityEnv:
+    size = int(size)
     zones = parse_congestion(congestion_text, size)
-    env   = GreenCityEnv(size=size)
+    env = GreenCityEnv(size=size)
     env.reset(
         start_pos=[int(start_y), int(start_x)],
-        goal_pos =[int(goal_y),  int(goal_x)],
+        goal_pos=[int(goal_y), int(goal_x)],
         congestion_map=zones,
         vehicle=vehicle,
     )
@@ -45,26 +53,31 @@ def _make_env(size, start_y, start_x, goal_y, goal_x,
 def _summary_html(results: list[RouteResult], vehicle: str) -> str:
     rows = ""
     for r in results:
-        col   = {"DQN Agent": "#00e676", "Greedy": "#f44336",
-                 "A* Optimal": "#29b6f6"}.get(r.agent_name.split("(")[0].strip(), "#e6edf3")
-        saved = ""
+        col = {
+            "DQN Agent": "#00e676",
+            "Greedy": "#f44336",
+            "A* Optimal": "#29b6f6",
+        }.get(r.agent_name.split("(")[0].strip(), "#e6edf3")
+        saved = ""  # noqa: F841
         rows += f"""
         <tr>
           <td style="color:{col};font-weight:600">{r.agent_name}</td>
           <td style="font-family:'JetBrains Mono',monospace">{r.total_carbon:.3f} kg</td>
           <td style="font-family:'JetBrains Mono',monospace">{r.steps}</td>
           <td style="font-family:'JetBrains Mono',monospace">{r.congestion_hits}</td>
-          <td style="color:{'#00e676' if r.delivered else '#f44336'}">
-            {'✅ Delivered' if r.delivered else '❌ Max steps'}
+          <td style="color:{"#00e676" if r.delivered else "#f44336"}">
+            {"✅ Delivered" if r.delivered else "❌ Max steps"}
           </td>
         </tr>"""
 
     # Carbon saving of DQN vs Greedy
-    dqn_r    = next((r for r in results if "DQN" in r.agent_name), None)
+    dqn_r = next((r for r in results if "DQN" in r.agent_name), None)
     greedy_r = next((r for r in results if "Greedy" in r.agent_name), None)
     saving_html = ""
     if dqn_r and greedy_r and greedy_r.total_carbon > 0:
-        saved_pct = (greedy_r.total_carbon - dqn_r.total_carbon) / greedy_r.total_carbon * 100
+        saved_pct = (
+            (greedy_r.total_carbon - dqn_r.total_carbon) / greedy_r.total_carbon * 100
+        )
         col = "#00e676" if saved_pct > 0 else "#f44336"
         saving_html = f"""
         <div style="margin-top:1rem;padding:0.8rem 1rem;background:rgba(0,230,118,0.08);
@@ -97,60 +110,81 @@ def _summary_html(results: list[RouteResult], vehicle: str) -> str:
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
 
+
 def cb_load_preset(preset_name: str):
     p = PRESETS[preset_name]
     cong_str = "; ".join(f"{z[0]} {z[1]}" for z in p["congestion"])
     return (
-        p["size"], p["start"][0], p["start"][1],
-        p["goal"][0], p["goal"][1], cong_str,
+        p["size"],
+        p["start"][0],
+        p["start"][1],
+        p["goal"][0],
+        p["goal"][1],
+        cong_str,
         f"*{p['description']}*",
     )
 
 
 def cb_run_mission(
-    size, start_y, start_x, goal_y, goal_x,
-    congestion_text, vehicle, run_dqn_flag, run_greedy_flag, run_astar_flag,
-    progress: gr.Progress = gr.Progress(),
+    size,
+    start_y,
+    start_x,
+    goal_y,
+    goal_x,
+    congestion_text,
+    vehicle,
+    run_dqn_flag,
+    run_greedy_flag,
+    run_astar_flag,
+    progress: gr.Progress = gr.Progress(),  # noqa: B008
 ):
     try:
         progress(0.05, desc="Building city environment…")
-        env = _make_env(size, start_y, start_x, goal_y, goal_x,
-                        congestion_text, vehicle)
+        env = _make_env(
+            size, start_y, start_x, goal_y, goal_x, congestion_text, vehicle
+        )
 
         results: list[RouteResult] = []
 
         if run_dqn_flag:
             progress(0.2, desc="Running DQN agent…")
-            env2 = _make_env(size, start_y, start_x, goal_y, goal_x,
-                             congestion_text, vehicle)
+            env2 = _make_env(
+                size, start_y, start_x, goal_y, goal_x, congestion_text, vehicle
+            )
             results.append(run_dqn(env2))
 
         if run_greedy_flag:
             progress(0.5, desc="Running Greedy heuristic…")
-            env3 = _make_env(size, start_y, start_x, goal_y, goal_x,
-                             congestion_text, vehicle)
+            env3 = _make_env(
+                size, start_y, start_x, goal_y, goal_x, congestion_text, vehicle
+            )
             results.append(run_greedy(env3))
 
         if run_astar_flag:
             progress(0.7, desc="Running A* optimal…")
-            env4 = _make_env(size, start_y, start_x, goal_y, goal_x,
-                             congestion_text, vehicle)
+            env4 = _make_env(
+                size, start_y, start_x, goal_y, goal_x, congestion_text, vehicle
+            )
             results.append(run_astar(env4))
 
         if not results:
-            return (empty_fig("Select at least one strategy."),
-                    empty_fig(""), empty_fig(""), "*No strategies selected.*")
+            return (
+                empty_fig("Select at least one strategy."),
+                empty_fig(""),
+                empty_fig(""),
+                "*No strategies selected.*",
+            )
 
         progress(0.85, desc="Building charts…")
-        map_fig    = city_map(env, results)
-        trace_fig  = carbon_trace(results)
-        radar_fig  = performance_radar(results, int(size))
-        summary    = _summary_html(results, vehicle)
+        map_fig = city_map(env, results)
+        trace_fig = carbon_trace(results)
+        radar_fig = performance_radar(results, int(size))
+        summary = _summary_html(results, vehicle)
 
         progress(1.0)
         return map_fig, trace_fig, radar_fig, summary
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         err = empty_fig(f"Error: {e}")
         return err, err, err, f"❌ **Error:** {e}"
 
@@ -290,7 +324,6 @@ footer { display:none !important; }
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="Green Logistics Optimizer") as demo:
-
     gr.HTML("""
     <div class="glo-header">
         <div class="glo-title">🌿 Green Logistics Optimizer</div>
@@ -308,12 +341,10 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
     """)
 
     with gr.Tabs():
-
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Mission Control
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🗺️ MISSION CONTROL"):
-
             gr.HTML("""
             <div style="padding:0.7rem 0 0.3rem;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;
@@ -330,26 +361,44 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
             with gr.Row():
                 # ── Config panel ──────────────────────────────────────────
                 with gr.Column(scale=1, min_width=300, elem_classes="glass-card"):
-
-                    gr.HTML('<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.68rem;color:#8b949e;text-transform:uppercase;margin-bottom:0.5rem;">SCENARIO PRESET</div>')
-                    preset_dd = gr.Dropdown(list(PRESETS.keys()),
-                                            value=list(PRESETS.keys())[0],
-                                            label="Load Preset")
+                    gr.HTML(
+                        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#8b949e;text-transform:uppercase;margin-bottom:0.5rem;\">SCENARIO PRESET</div>"
+                    )
+                    preset_dd = gr.Dropdown(
+                        list(PRESETS.keys()),
+                        value=list(PRESETS.keys())[0],  # noqa: RUF015
+                        label="Load Preset",
+                    )
                     preset_desc = gr.Markdown("*Select a preset to load.*")
                     btn_load = gr.Button("📋 Load Preset", variant="secondary")
 
-                    gr.HTML('<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.68rem;color:#8b949e;text-transform:uppercase;margin:0.8rem 0 0.4rem;">CITY CONFIG</div>')
-                    grid_size  = gr.Slider(4, 12, value=7, step=1, label="Grid size (N×N)")
+                    gr.HTML(
+                        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#8b949e;text-transform:uppercase;margin:0.8rem 0 0.4rem;\">CITY CONFIG</div>"
+                    )
+                    grid_size = gr.Slider(
+                        4, 12, value=7, step=1, label="Grid size (N×N)"
+                    )
                     with gr.Row():
-                        start_y = gr.Number(value=0, label="Start row", precision=0, minimum=0)
-                        start_x = gr.Number(value=0, label="Start col", precision=0, minimum=0)
+                        start_y = gr.Number(
+                            value=0, label="Start row", precision=0, minimum=0
+                        )
+                        start_x = gr.Number(
+                            value=0, label="Start col", precision=0, minimum=0
+                        )
                     with gr.Row():
-                        goal_y  = gr.Number(value=6, label="Goal row",  precision=0, minimum=0)
-                        goal_x  = gr.Number(value=6, label="Goal col",  precision=0, minimum=0)
+                        goal_y = gr.Number(
+                            value=6, label="Goal row", precision=0, minimum=0
+                        )
+                        goal_x = gr.Number(
+                            value=6, label="Goal col", precision=0, minimum=0
+                        )
 
-                    vehicle = gr.Dropdown(["Diesel", "EV"], value="Diesel",
-                                          label="Vehicle type",
-                                          info="EV: 0.2× base carbon · Diesel: 1.0×")
+                    vehicle = gr.Dropdown(
+                        ["Diesel", "EV"],
+                        value="Diesel",
+                        label="Vehicle type",
+                        info="EV: 0.2× base carbon · Diesel: 1.0×",
+                    )
 
                     cong_text = gr.Textbox(
                         value="2 2; 2 3; 3 2; 4 4; 4 5",
@@ -358,18 +407,24 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
                         lines=2,
                     )
 
-                    gr.HTML('<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.68rem;color:#8b949e;text-transform:uppercase;margin:0.8rem 0 0.4rem;">STRATEGIES</div>')
-                    run_dqn_cb     = gr.Checkbox(label="DQN Agent",       value=True)
-                    run_greedy_cb  = gr.Checkbox(label="Greedy Heuristic", value=True)
-                    run_astar_cb   = gr.Checkbox(label="A* Optimal",       value=True)
+                    gr.HTML(
+                        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#8b949e;text-transform:uppercase;margin:0.8rem 0 0.4rem;\">STRATEGIES</div>"
+                    )
+                    run_dqn_cb = gr.Checkbox(label="DQN Agent", value=True)
+                    run_greedy_cb = gr.Checkbox(label="Greedy Heuristic", value=True)
+                    run_astar_cb = gr.Checkbox(label="A* Optimal", value=True)
 
                     btn_run = gr.Button("🚀 DEPLOY FLEET", variant="primary")
 
                 # ── Output panel ──────────────────────────────────────────
                 with gr.Column(scale=2):
                     summary_html = gr.HTML("*Deploy the fleet to see results.*")
-                    city_img = gr.Image(label="City Carbon Map", type="pil",
-                                        show_label=False, height=480)
+                    city_img = gr.Image(
+                        label="City Carbon Map",
+                        type="pil",
+                        show_label=False,
+                        height=480,
+                    )
 
             # Preset loader
             btn_load.click(
@@ -382,7 +437,6 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
         # Tab 2 — Analytics
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("📊 ANALYTICS"):
-
             gr.HTML("""
             <div style="padding:0.7rem 0 0.3rem;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;
@@ -393,16 +447,17 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
             """)
 
             with gr.Row():
-                trace_img = gr.Image(label="Carbon Trace", type="pil",
-                                     show_label=False, height=320)
-                radar_img = gr.Image(label="Performance Radar", type="pil",
-                                     show_label=False, height=320)
+                trace_img = gr.Image(
+                    label="Carbon Trace", type="pil", show_label=False, height=320
+                )
+                radar_img = gr.Image(
+                    label="Performance Radar", type="pil", show_label=False, height=320
+                )
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 3 — Training Lab
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("⚗️ TRAINING LAB"):
-
             gr.HTML("""
             <div style="padding:0.7rem 0 0.3rem;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;
@@ -418,12 +473,17 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, elem_classes="glass-card"):
-                    t_steps = gr.Slider(5_000, 100_000, value=20_000, step=5_000,
-                                        label="Training timesteps",
-                                        info="~20k = fast (~30s) · ~50k = better policy")
+                    t_steps = gr.Slider(
+                        5_000,
+                        100_000,
+                        value=20_000,
+                        step=5_000,
+                        label="Training timesteps",
+                        info="~20k = fast (~30s) · ~50k = better policy",
+                    )
                     with gr.Row():
-                        btn_train   = gr.Button("▶ START TRAINING", variant="primary")
-                        btn_stop    = gr.Button("⏹ STOP", variant="stop")
+                        btn_train = gr.Button("▶ START TRAINING", variant="primary")
+                        btn_stop = gr.Button("⏹ STOP", variant="stop")
                     btn_refresh = gr.Button("🔄 REFRESH", variant="secondary")
                     t_msg = gr.Textbox(label="Status", lines=2, interactive=False)
 
@@ -447,8 +507,9 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
 
                 with gr.Column(scale=2):
                     t_status = gr.Markdown("*Start training to see live metrics.*")
-                    t_chart  = gr.Image(label="Training", type="pil",
-                                        show_label=False, height=300)
+                    t_chart = gr.Image(
+                        label="Training", type="pil", show_label=False, height=300
+                    )
 
             btn_train.click(cb_start_train, [t_steps], [t_msg])
             btn_stop.click(cb_stop_train, outputs=[t_msg])
@@ -458,7 +519,6 @@ with gr.Blocks(title="Green Logistics Optimizer") as demo:
         # Tab 4 — How DQN Works
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("📚 HOW DQN WORKS"):
-
             gr.Markdown("""
 ## Deep Q-Network (DQN) for Route Optimization
 
@@ -490,7 +550,7 @@ reaching the delivery destination.
 
 At each step the network is trained to satisfy:
 
-$$Q(s, a) = r + \gamma \max_{a'} Q(s', a')$$
+$$Q(s, a) = r + \\gamma \\max_{a'} Q(s', a')$$
 
 **DQN key innovations** over vanilla Q-learning:
 
@@ -549,8 +609,18 @@ Even in congestion (0.2 × 4 = 0.8), EV beats Diesel on clear roads (1.0).
     # ── Mission Control wiring ─────────────────────────────────────────────────
     btn_run.click(
         cb_run_mission,
-        inputs=[grid_size, start_y, start_x, goal_y, goal_x,
-                cong_text, vehicle, run_dqn_cb, run_greedy_cb, run_astar_cb],
+        inputs=[
+            grid_size,
+            start_y,
+            start_x,
+            goal_y,
+            goal_x,
+            cong_text,
+            vehicle,
+            run_dqn_cb,
+            run_greedy_cb,
+            run_astar_cb,
+        ],
         outputs=[city_img, trace_img, radar_img, summary_html],
     )
 

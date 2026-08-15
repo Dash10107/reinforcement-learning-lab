@@ -34,7 +34,7 @@ class PolicyNetwork(nn.Module):
 
     def forward(self, state):
         logits = self.net(state)
-        return F.softmax(logits, dim=-1)   # probability for each action
+        return F.softmax(logits, dim=-1)  # probability for each action
 ```
 
 The agent samples an action from this distribution, executes it, gets a reward, and then updates the network: *increase the probability of actions that led to good outcomes; decrease the probability of actions that led to bad ones.*
@@ -80,7 +80,7 @@ class ActorCritic(nn.Module):
             nn.ReLU(),
         )
         # Actor head: outputs action probabilities
-        self.actor  = nn.Linear(128, n_actions)
+        self.actor = nn.Linear(128, n_actions)
         # Critic head: outputs a single value estimate
         self.critic = nn.Linear(128, 1)
 
@@ -99,7 +99,7 @@ advantage = returns - values.detach()
 critic_loss = F.mse_loss(values, returns)
 
 # Actor loss: increase probability of actions with positive advantage
-actor_loss  = -(log_probs * advantage.detach()).mean()
+actor_loss = -(log_probs * advantage.detach()).mean()
 
 # Total loss: train both networks together
 loss = actor_loss + 0.5 * critic_loss
@@ -156,7 +156,7 @@ def compute_gae(rewards, values, dones, gamma=0.99, lam=0.95):
     gae = 0
     for t in reversed(range(len(rewards))):
         # TD error at step t
-        delta = rewards[t] + gamma * values[t+1] * (1 - dones[t]) - values[t]
+        delta = rewards[t] + gamma * values[t + 1] * (1 - dones[t]) - values[t]
         # Accumulate GAE backward
         gae = delta + gamma * lam * (1 - dones[t]) * gae
         advantages.insert(0, gae)

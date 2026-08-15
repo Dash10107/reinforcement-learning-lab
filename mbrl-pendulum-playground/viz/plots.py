@@ -3,31 +3,33 @@ All visualisation for the MBRL Pendulum Playground.
 """
 
 from __future__ import annotations
+
 import io
 import tempfile
-import numpy as np
+
 import matplotlib
+import numpy as np
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-from matplotlib.figure import Figure
 import PIL.Image
-
+from matplotlib import gridspec
+from matplotlib.figure import Figure
 from model.dynamics import STATE_NAMES
 
 # ── Palette ───────────────────────────────────────────────────────────────────
-BG     = "#0e1117"
-BG2    = "#161b27"
-BG3    = "#1c2333"
-GRID   = "#252d40"
-TEXT   = "#e2e8f0"
-DIM    = "#4a5568"
-REAL   = "#7c3aed"   # purple — real trajectory
-IMAG   = "#06b6d4"   # cyan   — imagined trajectory
-ERR    = "#f59e0b"   # amber  — error
-MPC    = "#10b981"   # green  — MPC
-RAND   = "#ef4444"   # red    — random baseline
-UNC    = "#8b5cf6"   # violet — uncertainty band
+BG = "#0e1117"
+BG2 = "#161b27"
+BG3 = "#1c2333"
+GRID = "#252d40"
+TEXT = "#e2e8f0"
+DIM = "#4a5568"
+REAL = "#7c3aed"  # purple — real trajectory
+IMAG = "#06b6d4"  # cyan   — imagined trajectory
+ERR = "#f59e0b"  # amber  — error
+MPC = "#10b981"  # green  — MPC
+RAND = "#ef4444"  # red    — random baseline
+UNC = "#8b5cf6"  # violet — uncertainty band
 
 
 def _style(ax, title="", xlabel="", ylabel=""):
@@ -37,8 +39,14 @@ def _style(ax, title="", xlabel="", ylabel=""):
         spine.set_color(GRID)
     ax.grid(color=GRID, linewidth=0.5, linestyle="--", alpha=0.6)
     if title:
-        ax.set_title(title, color=TEXT, fontsize=9, pad=7,
-                     fontfamily="monospace", fontweight="bold")
+        ax.set_title(
+            title,
+            color=TEXT,
+            fontsize=9,
+            pad=7,
+            fontfamily="monospace",
+            fontweight="bold",
+        )
     if xlabel:
         ax.set_xlabel(xlabel, color=DIM, fontsize=8)
     if ylabel:
@@ -47,14 +55,16 @@ def _style(ax, title="", xlabel="", ylabel=""):
 
 def _fig_to_pil(fig: Figure) -> PIL.Image.Image:
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=110, bbox_inches="tight",
-                facecolor=fig.get_facecolor())
+    fig.savefig(
+        buf, format="png", dpi=110, bbox_inches="tight", facecolor=fig.get_facecolor()
+    )
     buf.seek(0)
     plt.close(fig)
     return PIL.Image.open(buf).convert("RGB")
 
 
 # ── 1. Single-step explorer ───────────────────────────────────────────────────
+
 
 def single_step_comparison(
     real_next: np.ndarray,
@@ -68,12 +78,33 @@ def single_step_comparison(
 
     x = np.arange(3)
     w = 0.32
-    bars_r = ax.bar(x - w/2, real_next, width=w, color=REAL, label="Real (environment)", edgecolor=BG)
-    bars_p = ax.bar(x + w/2, pred_next, width=w, color=IMAG, label="Predicted (model)", edgecolor=BG)
+    bars_r = ax.bar(
+        x - w / 2,
+        real_next,
+        width=w,
+        color=REAL,
+        label="Real (environment)",
+        edgecolor=BG,
+    )  # noqa: F841
+    bars_p = ax.bar(
+        x + w / 2,
+        pred_next,
+        width=w,
+        color=IMAG,
+        label="Predicted (model)",
+        edgecolor=BG,
+    )  # noqa: F841
 
     if pred_std is not None:
-        ax.errorbar(x + w/2, pred_next, yerr=pred_std * 1.96,
-                    fmt="none", color=UNC, linewidth=1.5, capsize=4)
+        ax.errorbar(
+            x + w / 2,
+            pred_next,
+            yerr=pred_std * 1.96,
+            fmt="none",
+            color=UNC,
+            linewidth=1.5,
+            capsize=4,
+        )
 
     ax.set_xticks(x)
     ax.set_xticklabels(STATE_NAMES, color=DIM, fontsize=9)
@@ -82,8 +113,15 @@ def single_step_comparison(
     # Annotate error
     for i, (r, p) in enumerate(zip(real_next, pred_next)):
         err = abs(r - p)
-        ax.text(i, max(abs(r), abs(p)) + 0.05, f"Δ{err:.3f}",
-                ha="center", color=ERR, fontsize=7.5, fontfamily="monospace")
+        ax.text(
+            i,
+            max(abs(r), abs(p)) + 0.05,
+            f"Δ{err:.3f}",
+            ha="center",
+            color=ERR,
+            fontsize=7.5,
+            fontfamily="monospace",
+        )
 
     ax.legend(facecolor=BG3, edgecolor=GRID, labelcolor=TEXT, fontsize=8)
     fig.tight_layout()
@@ -92,18 +130,28 @@ def single_step_comparison(
 
 # ── 2. Imagination rollout comparison ────────────────────────────────────────
 
+
 def imagination_comparison(
-    real_traj: np.ndarray,         # (T, 3) real states
-    imag_traj: np.ndarray,         # (T, 3) imagined states
-    imag_std: np.ndarray | None,   # (T, 3) uncertainty
+    real_traj: np.ndarray,  # (T, 3) real states
+    imag_traj: np.ndarray,  # (T, 3) imagined states
+    imag_std: np.ndarray | None,  # (T, 3) uncertainty
 ) -> Figure:
     """4-panel: 3 state dims + cumulative MSE error."""
     T = len(real_traj)
     steps = np.arange(T)
 
     fig = plt.figure(figsize=(13, 8), facecolor=BG)
-    gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.55, wspace=0.35,
-                           left=0.08, right=0.97, top=0.88, bottom=0.08)
+    gs = gridspec.GridSpec(
+        2,
+        2,
+        figure=fig,
+        hspace=0.55,
+        wspace=0.35,
+        left=0.08,
+        right=0.97,
+        top=0.88,
+        bottom=0.08,
+    )
 
     # State panels
     for i, name in enumerate(STATE_NAMES):
@@ -112,14 +160,24 @@ def imagination_comparison(
         _style(ax, name.upper(), "Step →", "Value")
 
         ax.plot(steps, real_traj[:, i], color=REAL, linewidth=2.2, label="Real")
-        ax.plot(steps, imag_traj[:, i], color=IMAG, linewidth=2.0,
-                linestyle="--", label="Imagined")
+        ax.plot(
+            steps,
+            imag_traj[:, i],
+            color=IMAG,
+            linewidth=2.0,
+            linestyle="--",
+            label="Imagined",
+        )
 
         if imag_std is not None:
-            ax.fill_between(steps,
-                            imag_traj[:, i] - 2 * imag_std[:, i],
-                            imag_traj[:, i] + 2 * imag_std[:, i],
-                            color=IMAG, alpha=0.15, label="95% CI")
+            ax.fill_between(
+                steps,
+                imag_traj[:, i] - 2 * imag_std[:, i],
+                imag_traj[:, i] + 2 * imag_std[:, i],
+                color=IMAG,
+                alpha=0.15,
+                label="95% CI",
+            )
         ax.legend(facecolor=BG3, edgecolor=GRID, labelcolor=TEXT, fontsize=7)
 
     # MSE panel
@@ -130,20 +188,26 @@ def imagination_comparison(
     ax4.fill_between(steps, 0, mse_per_step, color=ERR, alpha=0.3)
     ax4.plot(steps, mse_per_step, color=ERR, linewidth=1.5, label="Step MSE")
     ax4_twin = ax4.twinx()
-    ax4_twin.plot(steps, cum_mse, color=UNC, linewidth=2.0,
-                  linestyle=":", label="Cumulative")
+    ax4_twin.plot(
+        steps, cum_mse, color=UNC, linewidth=2.0, linestyle=":", label="Cumulative"
+    )
     ax4_twin.tick_params(colors=DIM, labelsize=7)
     ax4_twin.set_ylabel("Cumulative MSE", color=DIM, fontsize=7)
     ax4.legend(facecolor=BG3, edgecolor=GRID, labelcolor=TEXT, fontsize=7)
 
     fig.suptitle(
         "IMAGINATION ROLLOUT  ·  Real Trajectory vs Model Prediction",
-        color=TEXT, fontsize=11, fontfamily="monospace", fontweight="bold", y=0.95,
+        color=TEXT,
+        fontsize=11,
+        fontfamily="monospace",
+        fontweight="bold",
+        y=0.95,
     )
     return fig
 
 
 # ── 3. Training loss curve ────────────────────────────────────────────────────
+
 
 def training_curve(train_losses: list[float], val_losses: list[float]) -> Figure:
     fig, axes = plt.subplots(1, 2, figsize=(12, 4), facecolor=BG)
@@ -154,8 +218,9 @@ def training_curve(train_losses: list[float], val_losses: list[float]) -> Figure
     _style(ax, "DYNAMICS MODEL TRAINING", "Epoch", "MSE Loss")
     eps = list(range(len(train_losses)))
     ax.semilogy(eps, train_losses, color=MPC, linewidth=2.0, label="Train")
-    ax.semilogy(eps, val_losses, color=REAL, linewidth=2.0,
-                linestyle="--", label="Validation")
+    ax.semilogy(
+        eps, val_losses, color=REAL, linewidth=2.0, linestyle="--", label="Validation"
+    )
     ax.legend(facecolor=BG3, edgecolor=GRID, labelcolor=TEXT, fontsize=9)
 
     # Per-state breakdown indicator
@@ -165,19 +230,38 @@ def training_curve(train_losses: list[float], val_losses: list[float]) -> Figure
 
     if train_losses:
         info = [
-            ("Final Train MSE",  f"{train_losses[-1]:.5f}"),
-            ("Final Val MSE",    f"{val_losses[-1]:.5f}" if val_losses else "—"),
-            ("Best Val MSE",     f"{min(val_losses):.5f}" if val_losses else "—"),
-            ("Epochs",           str(len(train_losses))),
-            ("Improvement",      f"{(train_losses[0]-train_losses[-1])/train_losses[0]*100:.1f}%"
-                                  if train_losses[0] > 0 else "—"),
+            ("Final Train MSE", f"{train_losses[-1]:.5f}"),
+            ("Final Val MSE", f"{val_losses[-1]:.5f}" if val_losses else "—"),
+            ("Best Val MSE", f"{min(val_losses):.5f}" if val_losses else "—"),
+            ("Epochs", str(len(train_losses))),
+            (
+                "Improvement",
+                f"{(train_losses[0] - train_losses[-1]) / train_losses[0] * 100:.1f}%"
+                if train_losses[0] > 0
+                else "—",
+            ),
         ]
         for i, (label, val) in enumerate(info):
             y = 0.85 - i * 0.16
-            ax2.text(0.05, y, label, transform=ax2.transAxes,
-                     color=DIM, fontsize=9, fontfamily="monospace")
-            ax2.text(0.65, y, val, transform=ax2.transAxes,
-                     color=MPC, fontsize=9, fontweight="bold", fontfamily="monospace")
+            ax2.text(
+                0.05,
+                y,
+                label,
+                transform=ax2.transAxes,
+                color=DIM,
+                fontsize=9,
+                fontfamily="monospace",
+            )
+            ax2.text(
+                0.65,
+                y,
+                val,
+                transform=ax2.transAxes,
+                color=MPC,
+                fontsize=9,
+                fontweight="bold",
+                fontfamily="monospace",
+            )
 
     fig.tight_layout(pad=2.0)
     return fig
@@ -185,16 +269,26 @@ def training_curve(train_losses: list[float], val_losses: list[float]) -> Figure
 
 # ── 4. MPC episode results ────────────────────────────────────────────────────
 
+
 def mpc_episode_chart(
     mpc_result: dict,
     random_result: dict | None = None,
 ) -> Figure:
     fig = plt.figure(figsize=(13, 7), facecolor=BG)
-    gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.55, wspace=0.35,
-                           left=0.08, right=0.97, top=0.88, bottom=0.08)
+    gs = gridspec.GridSpec(
+        2,
+        2,
+        figure=fig,
+        hspace=0.55,
+        wspace=0.35,
+        left=0.08,
+        right=0.97,
+        top=0.88,
+        bottom=0.08,
+    )
 
-    mpc_r   = mpc_result["rewards"]
-    mpc_a   = mpc_result["actions"]
+    mpc_r = mpc_result["rewards"]
+    mpc_a = mpc_result["actions"]
     mpc_cum = np.cumsum(mpc_r)
     steps_m = list(range(len(mpc_r)))
 
@@ -204,11 +298,17 @@ def mpc_episode_chart(
     ax1.fill_between(steps_m, mpc_cum, alpha=0.2, color=MPC)
     ax1.plot(steps_m, mpc_cum, color=MPC, linewidth=2.2, label="MPC (MBRL)")
     if random_result:
-        rand_r   = random_result["rewards"]
-        rand_cum = np.cumsum(rand_r[:len(mpc_r)])
+        rand_r = random_result["rewards"]
+        rand_cum = np.cumsum(rand_r[: len(mpc_r)])
         ax1.fill_between(range(len(rand_cum)), rand_cum, alpha=0.15, color=RAND)
-        ax1.plot(range(len(rand_cum)), rand_cum, color=RAND, linewidth=1.8,
-                 linestyle="--", label="Random policy")
+        ax1.plot(
+            range(len(rand_cum)),
+            rand_cum,
+            color=RAND,
+            linewidth=1.8,
+            linestyle="--",
+            label="Random policy",
+        )
     ax1.axhline(0, color=GRID, linewidth=0.8)
     ax1.legend(facecolor=BG3, edgecolor=GRID, labelcolor=TEXT, fontsize=9)
 
@@ -226,37 +326,48 @@ def mpc_episode_chart(
     cos_vals = [s[0] for s in mpc_result["states"]]
     ax3.fill_between(steps_m, 0, cos_vals, alpha=0.2, color=IMAG)
     ax3.plot(steps_m, cos_vals, color=IMAG, linewidth=2.0)
-    ax3.axhline(1.0, color=MPC, linewidth=1, linestyle="--",
-                alpha=0.5, label="Upright target")
+    ax3.axhline(
+        1.0, color=MPC, linewidth=1, linestyle="--", alpha=0.5, label="Upright target"
+    )
     ax3.set_ylim(-1.1, 1.15)
     ax3.legend(facecolor=BG3, edgecolor=GRID, labelcolor=TEXT, fontsize=8)
 
     total_mpc = mpc_result["total_reward"]
-    total_r   = random_result["total_reward"] if random_result else 0
+    total_r = random_result["total_reward"] if random_result else 0
     fig.suptitle(
         f"MPC EPISODE  ·  Total Reward: {total_mpc:.1f}  "
         f"(Random: {total_r:.1f}  ·  Improvement: {total_mpc - total_r:+.1f})",
-        color=TEXT, fontsize=10, fontfamily="monospace", fontweight="bold", y=0.96,
+        color=TEXT,
+        fontsize=10,
+        fontfamily="monospace",
+        fontweight="bold",
+        y=0.96,
     )
     return fig
 
 
 # ── 5. GIF ────────────────────────────────────────────────────────────────────
 
+
 def make_mpc_gif(frames: list[np.ndarray], fps: int = 20) -> str:
     """Convert RGB frames to animated GIF. Returns temp file path."""
     if not frames:
         return ""
     pil_frames = [PIL.Image.fromarray(f) for f in frames]
-    tmp = tempfile.NamedTemporaryFile(suffix=".gif", delete=False)
+    tmp = tempfile.NamedTemporaryFile(suffix=".gif", delete=False)  # noqa: SIM115
     pil_frames[0].save(
-        tmp.name, save_all=True, append_images=pil_frames[1:],
-        duration=int(1000 / fps), loop=0, optimize=False,
+        tmp.name,
+        save_all=True,
+        append_images=pil_frames[1:],
+        duration=int(1000 / fps),
+        loop=0,
+        optimize=False,
     )
     return tmp.name
 
 
 # ── 6. Uncertainty heatmap ────────────────────────────────────────────────────
+
 
 def uncertainty_heatmap(
     ensemble,
@@ -268,16 +379,15 @@ def uncertainty_heatmap(
     at a fixed action = 0.
     """
     thetas = np.linspace(-np.pi, np.pi, n_grid)
-    vels   = np.linspace(vel_range[0], vel_range[1], n_grid)
+    vels = np.linspace(vel_range[0], vel_range[1], n_grid)
 
     unc_map = np.zeros((n_grid, n_grid))
     with __import__("torch").no_grad():
         import torch
+
         for i, theta in enumerate(thetas):
             for j, vel in enumerate(vels):
-                state = torch.FloatTensor([
-                    [np.cos(theta), np.sin(theta), vel]
-                ])
+                state = torch.FloatTensor([[np.cos(theta), np.sin(theta), vel]])
                 action = torch.zeros(1, 1)
                 _, std = ensemble.forward_all(state, action)
                 unc_map[j, i] = std.mean().item()
@@ -287,8 +397,11 @@ def uncertainty_heatmap(
     ax.set_facecolor(BG2)
 
     im = ax.contourf(
-        np.degrees(thetas), vels, unc_map,
-        levels=20, cmap="plasma",
+        np.degrees(thetas),
+        vels,
+        unc_map,
+        levels=20,
+        cmap="plasma",
     )
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(colors=DIM, labelsize=7)
@@ -313,8 +426,17 @@ def empty_fig(msg: str = "") -> Figure:
     fig, ax = plt.subplots(figsize=(10, 4), facecolor=BG)
     fig.patch.set_facecolor(BG)
     ax.set_facecolor(BG2)
-    ax.text(0.5, 0.5, msg, transform=ax.transAxes,
-            ha="center", va="center", color=DIM,
-            fontsize=12, fontfamily="monospace", wrap=True)
+    ax.text(
+        0.5,
+        0.5,
+        msg,
+        transform=ax.transAxes,
+        ha="center",
+        va="center",
+        color=DIM,
+        fontsize=12,
+        fontfamily="monospace",
+        wrap=True,
+    )
     ax.axis("off")
     return fig

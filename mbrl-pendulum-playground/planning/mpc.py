@@ -12,9 +12,9 @@ This is the simplest, most transparent form of MBRL planning.
 """
 
 from __future__ import annotations
+
 import numpy as np
 import torch
-
 from model.dynamics import pendulum_reward_batch
 
 
@@ -42,10 +42,10 @@ def random_shooting_mpc(
 
     with torch.no_grad():
         for h in range(horizon):
-            a_h = actions[:, h, :]                     # (n_samples, 1)
-            r_h = pendulum_reward_batch(states, a_h)   # (n_samples,)
-            total_rewards += r_h * (0.99 ** h)         # discounted
-            states = dynamics_model(states, a_h)       # (n_samples, 3)
+            a_h = actions[:, h, :]  # (n_samples, 1)
+            r_h = pendulum_reward_batch(states, a_h)  # (n_samples,)
+            total_rewards += r_h * (0.99**h)  # discounted
+            states = dynamics_model(states, a_h)  # (n_samples, 3)
 
     best_idx = total_rewards.argmax().item()
     best_action = float(actions[best_idx, 0, 0].item())
@@ -73,7 +73,7 @@ def run_mpc_episode(
     frames, rewards, actions_taken, states_log, planned_seqs = [], [], [], [], []
 
     for step in range(max_steps):
-        best_action, all_rewards, planned = random_shooting_mpc(
+        best_action, all_rewards, planned = random_shooting_mpc(  # noqa: RUF059
             obs, dynamics_model, horizon=horizon, n_samples=n_samples
         )
 
@@ -115,7 +115,7 @@ def run_random_episode(max_steps: int = 200, seed: int = 0) -> dict:
 
     for _ in range(max_steps):
         a = env.action_space.sample()
-        obs, r, term, trunc, _ = env.step(a)
+        obs, r, term, trunc, _ = env.step(a)  # noqa: RUF059
         rewards.append(float(r))
         actions.append(float(a[0]))
         if term or trunc:

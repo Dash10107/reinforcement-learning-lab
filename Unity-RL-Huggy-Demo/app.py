@@ -50,7 +50,6 @@ footer { display: none !important; }
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="Unity RL — Huggy Demo", css=CSS) as demo:
-
     gr.HTML("""
     <div style="text-align:center; padding: 2rem 1rem 1.2rem;
                 border-bottom: 1px solid #1e293b; margin-bottom: 1rem;">
@@ -73,12 +72,10 @@ with gr.Blocks(title="Unity RL — Huggy Demo", css=CSS) as demo:
     """)
 
     with gr.Tabs():
-
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Play
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🎮 Play with Huggy"):
-
             gr.HTML("""
             <div style="background:#111827; border:1px solid #1e293b; border-radius:10px;
                         padding:0.9rem 1.2rem; margin-bottom:1rem;
@@ -163,7 +160,6 @@ with gr.Blocks(title="Unity RL — Huggy Demo", css=CSS) as demo:
         # Tab 2 — How It Works
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🧠 How It Was Trained"):
-
             gr.Markdown("""
 ## From Zero to Fetch — How Huggy Learned
 
@@ -296,7 +292,6 @@ from grid mazes to physically simulated 3D creatures.**
         # Tab 3 — About This Project
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("📋 About"):
-
             gr.HTML("""
             <div style="max-width:720px; margin:0 auto;">
 

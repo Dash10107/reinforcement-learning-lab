@@ -5,33 +5,36 @@ Anyone can build a maze, pick a brain, and watch the bot learn to escape.
 """
 
 from __future__ import annotations
-import numpy as np
-import gradio as gr
 
-from maze.generator import generate_dfs_maze, generate_open_maze
-from maze.env import MazeEnv
+import gradio as gr
+import numpy as np
+from agents.montecarlo import train_montecarlo
 from agents.qlearning import train_qlearning
 from agents.sarsa import train_sarsa
-from agents.montecarlo import train_montecarlo
+from maze.env import MazeEnv
+from maze.generator import generate_dfs_maze, generate_open_maze
 from viz.renderer import (
-    make_solution_gif, make_training_chart,
-    make_qvalue_heatmap, make_race_chart, score_run,
+    make_qvalue_heatmap,
+    make_race_chart,
+    make_solution_gif,
+    make_training_chart,
+    score_run,
 )
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 ALGO_MAP = {
     "🧠 Q-Learning  (recommended)": "qlearning",
-    "🎯 SARSA  (cautious)":          "sarsa",
-    "🎲 Monte Carlo  (explorer)":    "montecarlo",
+    "🎯 SARSA  (cautious)": "sarsa",
+    "🎲 Monte Carlo  (explorer)": "montecarlo",
 }
 
 DIFFICULTY = {
-    "🐣 Tiny  (5×5)":    5,
-    "🐇 Small  (7×7)":   7,
-    "🐢 Medium  (9×9)":  9,
+    "🐣 Tiny  (5×5)": 5,
+    "🐇 Small  (7×7)": 7,
+    "🐢 Medium  (9×9)": 9,
     "🦊 Large  (13×13)": 13,
-    "🐉 XL  (17×17)":    17,
+    "🐉 XL  (17×17)": 17,
 }
 
 MAZE_STYLE = {
@@ -48,11 +51,20 @@ def _make_env(size: int, style: str, seed: int) -> MazeEnv:
     return MazeEnv(grid)
 
 
-def _train(env: MazeEnv, algo: str, episodes: int, alpha: float,
-           gamma: float, decay: float, seed: int):
-    fn = {"qlearning": train_qlearning,
-          "sarsa": train_sarsa,
-          "montecarlo": train_montecarlo}[algo]
+def _train(
+    env: MazeEnv,
+    algo: str,
+    episodes: int,
+    alpha: float,
+    gamma: float,
+    decay: float,
+    seed: int,
+):
+    fn = {
+        "qlearning": train_qlearning,
+        "sarsa": train_sarsa,
+        "montecarlo": train_montecarlo,
+    }[algo]
     return fn(env, episodes, alpha, gamma, decay, seed)
 
 
@@ -70,6 +82,7 @@ def _collect_path(env: MazeEnv, agent) -> list[tuple[int, ...]]:
 
 # ── Main Playground callback ──────────────────────────────────────────────────
 
+
 def cb_solve(
     difficulty: str,
     maze_style: str,
@@ -79,7 +92,7 @@ def cb_solve(
     gamma: float,
     decay: float,
     seed: int,
-    progress: gr.Progress = gr.Progress(),
+    progress: gr.Progress = gr.Progress(),  # noqa: B008
 ):
     progress(0.05, desc="Building maze…")
     size = DIFFICULTY[difficulty]
@@ -89,12 +102,15 @@ def cb_solve(
     env = _make_env(size, style, int(seed))
 
     progress(0.15, desc=f"Training {algo_label.split('(')[0].strip()}…")
-    agent, rewards = _train(env, algo, int(episodes), float(alpha),
-                            float(gamma), float(decay), int(seed))
+    agent, rewards = _train(
+        env, algo, int(episodes), float(alpha), float(gamma), float(decay), int(seed)
+    )
 
     progress(0.75, desc="Rendering solution…")
     env2 = _make_env(size, style, int(seed))
-    gif_path = make_solution_gif(env2, agent, fps=7, label=algo_label.split("(")[0].strip())
+    gif_path = make_solution_gif(
+        env2, agent, fps=7, label=algo_label.split("(")[0].strip()
+    )
 
     progress(0.85, desc="Building charts…")
     env3 = _make_env(size, style, int(seed))
@@ -107,14 +123,14 @@ def cb_solve(
     heatmap_fig = make_qvalue_heatmap(env4, agent)
 
     stats_md = f"""
-### {sc['grade']} — {sc['verdict']}
+### {sc["grade"]} — {sc["verdict"]}
 
 | | |
 |---|---|
-| **Solved** | {"✅ Yes" if sc['solved'] else "❌ No"} |
-| **Steps taken** | `{sc['steps']}` |
-| **Efficiency score** | `{sc['efficiency']}%` |
-| **Avg reward (final 20%)** | `{sc['avg_reward']:.1f}` |
+| **Solved** | {"✅ Yes" if sc["solved"] else "❌ No"} |
+| **Steps taken** | `{sc["steps"]}` |
+| **Efficiency score** | `{sc["efficiency"]}%` |
+| **Avg reward (final 20%)** | `{sc["avg_reward"]:.1f}` |
 | **Episodes trained** | `{int(episodes)}` |
 | **Maze size** | `{env.shape[0]} × {env.shape[1]}` cells |
 
@@ -127,12 +143,13 @@ def cb_solve(
 
 # ── Algorithm Race callback ───────────────────────────────────────────────────
 
+
 def cb_race(
     difficulty: str,
     maze_style: str,
     episodes: int,
     run_mc: bool,
-    progress: gr.Progress = gr.Progress(),
+    progress: gr.Progress = gr.Progress(),  # noqa: B008
 ):
     size = DIFFICULTY[difficulty]
     style = MAZE_STYLE[maze_style]
@@ -157,11 +174,11 @@ def cb_race(
     fig = make_race_chart(rq, "Q-Learning", rs, "SARSA", rc, name_c)
 
     # Winner
-    final_q = float(np.mean(rq[-max(1, len(rq)//5):]))
-    final_s = float(np.mean(rs[-max(1, len(rs)//5):]))
+    final_q = float(np.mean(rq[-max(1, len(rq) // 5) :]))
+    final_s = float(np.mean(rs[-max(1, len(rs) // 5) :]))
     scores = {"Q-Learning": final_q, "SARSA": final_s}
     if rc:
-        scores["Monte Carlo"] = float(np.mean(rc[-max(1, len(rc)//5):]))
+        scores["Monte Carlo"] = float(np.mean(rc[-max(1, len(rc) // 5) :]))
     winner = max(scores, key=lambda k: scores[k])
 
     result_md = f"""
@@ -169,7 +186,7 @@ def cb_race(
 
 | Algorithm | Final Score |
 |---|---|
-{"".join(f"| {'🥇 ' if k==winner else ''}{k} | `{v:.1f}` |" + chr(10) for k,v in scores.items())}
+{"".join(f"| {'🥇 ' if k == winner else ''}{k} | `{v:.1f}` |" + chr(10) for k, v in scores.items())}
 
 **Winner: {winner}** with a final average reward of `{scores[winner]:.1f}`
 
@@ -301,7 +318,6 @@ footer { display:none !important; }
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
-
     gr.HTML("""
     <div class="hero">
         <div class="hero-title">🤖 Maze Runner</div>
@@ -310,12 +326,10 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
     """)
 
     with gr.Tabs():
-
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Welcome
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🏠 Welcome"):
-
             gr.HTML("""
             <div style="text-align:center;padding:0.5rem 0 1.5rem;">
                 <p style="color:#8b949e;font-size:1rem;max-width:580px;margin:0 auto;">
@@ -420,7 +434,6 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
         # Tab 2 — Playground
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🎮 Playground"):
-
             gr.HTML("""
             <div style="padding:0.3rem 0 1rem;">
                 <div style="font-size:1.05rem;font-weight:600;color:#e6edf3;">
@@ -435,8 +448,9 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
             with gr.Row():
                 # ── Controls ──────────────────────────────────────────────
                 with gr.Column(scale=1, min_width=300):
-
-                    gr.HTML('<div style="font-size:0.75rem;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">🗺️ MAZE SETUP</div>')
+                    gr.HTML(
+                        '<div style="font-size:0.75rem;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">🗺️ MAZE SETUP</div>'
+                    )
 
                     difficulty = gr.Radio(
                         list(DIFFICULTY.keys()),
@@ -447,10 +461,12 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
                         list(MAZE_STYLE.keys()),
                         value="🏰 Corridors  (DFS)",
                         label="Maze style",
-                        info="Corridors = proper winding paths · Open = random walls"
+                        info="Corridors = proper winding paths · Open = random walls",
                     )
 
-                    gr.HTML('<div style="font-size:0.75rem;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;margin:0.8rem 0 0.5rem;">🧠 BOT BRAIN</div>')
+                    gr.HTML(
+                        '<div style="font-size:0.75rem;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;margin:0.8rem 0 0.5rem;">🧠 BOT BRAIN</div>'
+                    )
 
                     algo = gr.Radio(
                         list(ALGO_MAP.keys()),
@@ -458,44 +474,76 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
                         label="Algorithm",
                     )
 
-                    gr.HTML('<div style="font-size:0.75rem;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;margin:0.8rem 0 0.5rem;">⚙️ TRAINING</div>')
+                    gr.HTML(
+                        '<div style="font-size:0.75rem;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;margin:0.8rem 0 0.5rem;">⚙️ TRAINING</div>'
+                    )
 
-                    episodes = gr.Slider(100, 3000, value=800, step=100,
-                                         label="Training episodes",
-                                         info="More = smarter bot, but slower")
+                    episodes = gr.Slider(
+                        100,
+                        3000,
+                        value=800,
+                        step=100,
+                        label="Training episodes",
+                        info="More = smarter bot, but slower",
+                    )
 
                     with gr.Accordion("🔬 Advanced settings", open=False):
-                        alpha  = gr.Slider(0.01, 0.5,  value=0.1,   step=0.01, label="Learning speed (α)")
-                        gamma  = gr.Slider(0.5,  0.99, value=0.95,  step=0.01, label="Future planning (γ)")
-                        decay  = gr.Slider(0.90, 0.999,value=0.995, step=0.001,label="Exploration decay")
-                        seed   = gr.Slider(0,    100,  value=42,    step=1,    label="Random seed")
+                        alpha = gr.Slider(
+                            0.01, 0.5, value=0.1, step=0.01, label="Learning speed (α)"
+                        )
+                        gamma = gr.Slider(
+                            0.5,
+                            0.99,
+                            value=0.95,
+                            step=0.01,
+                            label="Future planning (γ)",
+                        )
+                        decay = gr.Slider(
+                            0.90,
+                            0.999,
+                            value=0.995,
+                            step=0.001,
+                            label="Exploration decay",
+                        )
+                        seed = gr.Slider(0, 100, value=42, step=1, label="Random seed")
 
                     btn_solve = gr.Button("🚀 Train & Watch!", variant="primary")
 
                 # ── Outputs ───────────────────────────────────────────────
                 with gr.Column(scale=2):
-                    play_stats = gr.Markdown("*Configure your maze and hit Train & Watch!*")
+                    play_stats = gr.Markdown(
+                        "*Configure your maze and hit Train & Watch!*"
+                    )
 
                     with gr.Row():
                         play_gif = gr.Image(
                             label="🎬 Bot solving the maze (animated)",
-                            type="filepath", height=360,
+                            type="filepath",
+                            height=360,
                         )
 
             with gr.Row():
-                play_train_fig  = gr.Plot(label="📈 Training progress")
-                play_heatmap    = gr.Plot(label="🌡️ Q-value map (what the bot learned)")
+                play_train_fig = gr.Plot(label="📈 Training progress")
+                play_heatmap = gr.Plot(label="🌡️ Q-value map (what the bot learned)")
 
             # hidden state defaults for advanced
             alpha_h = gr.State(0.1)
             gamma_h = gr.State(0.95)
             decay_h = gr.State(0.995)
-            seed_h  = gr.State(42)
+            seed_h = gr.State(42)
 
             btn_solve.click(
                 cb_solve,
-                inputs=[difficulty, maze_style, algo, episodes,
-                        alpha, gamma, decay, seed],
+                inputs=[
+                    difficulty,
+                    maze_style,
+                    algo,
+                    episodes,
+                    alpha,
+                    gamma,
+                    decay,
+                    seed,
+                ],
                 outputs=[play_gif, play_train_fig, play_heatmap, play_stats],
             )
 
@@ -503,7 +551,6 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
         # Tab 3 — Algorithm Race
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🏁 Algorithm Race"):
-
             gr.HTML("""
             <div style="padding:0.3rem 0 1rem;">
                 <div style="font-size:1.05rem;font-weight:600;color:#e6edf3;">
@@ -535,17 +582,28 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, min_width=260):
-                    race_diff  = gr.Radio(list(DIFFICULTY.keys()),
-                                          value="🐢 Medium  (9×9)", label="Maze difficulty")
-                    race_style = gr.Radio(list(MAZE_STYLE.keys()),
-                                          value="🏰 Corridors  (DFS)", label="Maze style")
-                    race_eps   = gr.Slider(200, 2000, value=600, step=100,
-                                           label="Episodes per algorithm")
-                    race_mc    = gr.Checkbox(label="Include Monte Carlo (slower)", value=True)
-                    btn_race   = gr.Button("🏁 Start Race!", variant="primary")
+                    race_diff = gr.Radio(
+                        list(DIFFICULTY.keys()),
+                        value="🐢 Medium  (9×9)",
+                        label="Maze difficulty",
+                    )
+                    race_style = gr.Radio(
+                        list(MAZE_STYLE.keys()),
+                        value="🏰 Corridors  (DFS)",
+                        label="Maze style",
+                    )
+                    race_eps = gr.Slider(
+                        200, 2000, value=600, step=100, label="Episodes per algorithm"
+                    )
+                    race_mc = gr.Checkbox(
+                        label="Include Monte Carlo (slower)", value=True
+                    )
+                    btn_race = gr.Button("🏁 Start Race!", variant="primary")
 
                 with gr.Column(scale=2):
-                    race_result = gr.Markdown("*Click Start Race to run the comparison.*")
+                    race_result = gr.Markdown(
+                        "*Click Start Race to run the comparison.*"
+                    )
 
             race_fig = gr.Plot(label="Race Results")
 
@@ -559,7 +617,6 @@ with gr.Blocks(title="🤖 Maze Runner — RL Playground") as demo:
         # Tab 4 — How it Works
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("🧠 How it Works"):
-
             gr.HTML("""
             <div style="max-width:700px;margin:0 auto;padding:1rem 0;">
 

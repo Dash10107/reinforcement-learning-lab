@@ -3,6 +3,7 @@ Gaussian HMM fitting, BIC model selection, and regime inference.
 """
 
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 from hmmlearn.hmm import GaussianHMM
@@ -57,12 +58,13 @@ def select_n_regimes(
     scores = []
     for n in range(min_n, max_n + 1):
         try:
-            m = GaussianHMM(n_components=n, covariance_type="diag",
-                            n_iter=1000, random_state=seed)
+            m = GaussianHMM(
+                n_components=n, covariance_type="diag", n_iter=1000, random_state=seed
+            )
             m.fit(Xs)
             bic = bic_score(m, Xs, n)
             scores.append((n, bic))
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
     if not scores:
@@ -78,7 +80,7 @@ def current_regime_probs(
     feat: pd.DataFrame,
 ) -> np.ndarray:
     """Return posterior probability distribution over regimes for last observation."""
-    X  = feat[FEATURE_COLS].values.astype(np.float64)
+    X = feat[FEATURE_COLS].values.astype(np.float64)
     Xs = scaler.transform(X)
     # Use forward algorithm log-alpha
     log_proba = model.predict_proba(Xs)
@@ -92,9 +94,9 @@ def model_diagnostics(
     n_states: int,
 ) -> dict:
     """Compute model quality metrics."""
-    X  = feat[FEATURE_COLS].values.astype(np.float64)
+    X = feat[FEATURE_COLS].values.astype(np.float64)
     Xs = scaler.transform(X)
-    n  = len(Xs)
+    n = len(Xs)
 
     log_lik = model.score(Xs) * n
     k = n_states * (n_states - 1) + (n_states - 1) + n_states * len(FEATURE_COLS) * 2

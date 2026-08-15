@@ -3,9 +3,11 @@ Simulation runner — runs one or multiple agents on the same environment.
 """
 
 from __future__ import annotations
+
 import numpy as np
-from bandits.environment import CampaignEnvironment, BannerArm
+
 from bandits.agents import BanditAgent, make_agent
+from bandits.environment import BannerArm, CampaignEnvironment
 
 
 def run_single(
@@ -64,7 +66,7 @@ def run_averaged(
     all_rewards: list[list[float]] = []
 
     for run in range(n_runs):
-        env   = CampaignEnvironment(arms, drift_std=drift_std, seed=run)
+        env = CampaignEnvironment(arms, drift_std=drift_std, seed=run)
         agent = make_agent(agent_name, len(arms), params.get(agent_name, {}))
         run_single(env, agent, n_steps, seed=run)
         all_regrets.append(agent.regret_history[:n_steps])

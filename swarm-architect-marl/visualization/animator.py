@@ -1,12 +1,12 @@
 import io
+
+import matplotlib
 import numpy as np
 import PIL.Image
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from typing import Optional
 
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 
 AGENT_COLORS = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"]
 GOAL_COLOR = "#DDA0DD"
@@ -14,9 +14,10 @@ GOAL_COLOR = "#DDA0DD"
 
 def frames_to_gif(frames: list[np.ndarray], fps: int = 12, loop: int = 0) -> str:
     """Convert RGB frames to a GIF saved as a temp file, return the path."""
-    import tempfile, os
+    import tempfile
+
     pil_frames = [PIL.Image.fromarray(f) for f in frames]
-    tmp = tempfile.NamedTemporaryFile(suffix=".gif", delete=False)
+    tmp = tempfile.NamedTemporaryFile(suffix=".gif", delete=False)  # noqa: SIM115
     pil_frames[0].save(
         tmp.name,
         save_all=True,
@@ -32,8 +33,15 @@ def make_training_plot(log_data: dict) -> plt.Figure:
     eps = log_data["episodes"]
     if not eps:
         fig, ax = plt.subplots(figsize=(10, 4))
-        ax.text(0.5, 0.5, "No training data yet.\nStart training in the Training Lab tab.",
-                ha="center", va="center", fontsize=14, color="#888")
+        ax.text(
+            0.5,
+            0.5,
+            "No training data yet.\nStart training in the Training Lab tab.",
+            ha="center",
+            va="center",
+            fontsize=14,
+            color="#888",
+        )
         ax.set_facecolor("#0f0f1a")
         fig.patch.set_facecolor("#0f0f1a")
         return fig
@@ -79,9 +87,17 @@ def make_reward_history_plot(log_data: dict) -> plt.Figure:
             k = max(5, len(eps) // 20)
             kernel = np.ones(k) / k
             smoothed = np.convolve(rewards, kernel, mode="valid")
-            ax.plot(eps[k - 1:], smoothed, color="#4ECDC4", linewidth=2.5, label="Smoothed")
-        ax.axhline(max(rewards), color="#FFEAA7", linestyle="--", linewidth=1, alpha=0.6,
-                   label=f"Best: {max(rewards):.3f}")
+            ax.plot(
+                eps[k - 1 :], smoothed, color="#4ECDC4", linewidth=2.5, label="Smoothed"
+            )
+        ax.axhline(
+            max(rewards),
+            color="#FFEAA7",
+            linestyle="--",
+            linewidth=1,
+            alpha=0.6,
+            label=f"Best: {max(rewards):.3f}",
+        )
         ax.legend(facecolor="#16213e", edgecolor="#333", labelcolor="white")
 
     ax.set_title("Team Reward over Training", color="white", fontsize=13, pad=10)
@@ -95,20 +111,36 @@ def make_reward_history_plot(log_data: dict) -> plt.Figure:
     return fig
 
 
-def overlay_metrics_on_frame(frame: np.ndarray, step: int, total_steps: int,
-                               rewards: Optional[dict] = None) -> np.ndarray:
+def overlay_metrics_on_frame(
+    frame: np.ndarray, step: int, total_steps: int, rewards: dict | None = None
+) -> np.ndarray:
     """Burn step counter and reward info into a frame using matplotlib."""
-    fig, ax = plt.subplots(figsize=(frame.shape[1] / 100, frame.shape[0] / 100), dpi=100)
+    fig, ax = plt.subplots(
+        figsize=(frame.shape[1] / 100, frame.shape[0] / 100), dpi=100
+    )
     ax.imshow(frame)
     ax.axis("off")
 
-    ax.text(5, 12, f"Step {step}/{total_steps}", fontsize=8, color="white",
-            fontweight="bold", bbox=dict(boxstyle="round,pad=0.2", fc="black", alpha=0.6))
+    ax.text(
+        5,
+        12,
+        f"Step {step}/{total_steps}",
+        fontsize=8,
+        color="white",
+        fontweight="bold",
+        bbox=dict(boxstyle="round,pad=0.2", fc="black", alpha=0.6),
+    )  # noqa: C408
 
     if rewards:
         team_r = sum(rewards.values())
-        ax.text(5, frame.shape[0] - 8, f"Team Reward: {team_r:.3f}", fontsize=7,
-                color="#4ECDC4", bbox=dict(boxstyle="round,pad=0.2", fc="black", alpha=0.6))
+        ax.text(
+            5,
+            frame.shape[0] - 8,
+            f"Team Reward: {team_r:.3f}",
+            fontsize=7,
+            color="#4ECDC4",
+            bbox=dict(boxstyle="round,pad=0.2", fc="black", alpha=0.6),
+        )  # noqa: C408
 
     fig.subplots_adjust(0, 0, 1, 1)
     buf = io.BytesIO()

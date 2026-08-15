@@ -5,16 +5,21 @@ multi-agent AI systems — no ML background required.
 """
 
 from __future__ import annotations
+
 import os
 import threading
-import numpy as np
-import gradio as gr
 
-from config import ENV, PPO, NET, TRAIN
+import gradio as gr
+import numpy as np
 from agents.ippo import IPPOTrainer
-from environment.wrapper import make_env, get_agent_ids
+from config import ENV, NET, PPO, TRAIN
+from environment.wrapper import get_agent_ids, make_env
 from evaluation.metrics import TrainingLog, evaluate_agents
-from visualization.animator import frames_to_gif, make_training_plot, make_reward_history_plot
+from visualization.animator import (
+    frames_to_gif,
+    make_reward_history_plot,
+    make_training_plot,
+)
 
 # ── Global state ──────────────────────────────────────────────────────────────
 _trainer: IPPOTrainer | None = None
@@ -26,7 +31,7 @@ _status_message = "Ready."
 
 
 def _init_trainer() -> IPPOTrainer:
-    global _trainer, _agent_ids
+    global _trainer, _agent_ids  # noqa: PLW0602
     probe = make_env(ENV, render=False)
     _agent_ids = get_agent_ids(probe)
     probe.close()
@@ -41,7 +46,7 @@ def _load_pretrained(trainer: IPPOTrainer) -> bool:
             try:
                 trainer.load_best(p)
                 return True
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
     return False
 
@@ -74,7 +79,7 @@ def _training_encouragement(rolling: float, episode: int) -> str:
 
 # ── Training loop ─────────────────────────────────────────────────────────────
 def _train_loop(episodes: int, lr: float, gamma: float, clip: float, rollout: int):
-    global _trainer, _log, _training_active, _status_message
+    global _trainer, _log, _training_active, _status_message  # noqa: PLW0602
     PPO.lr_actor = lr
     PPO.gamma = gamma
     PPO.clip_epsilon = clip
@@ -108,7 +113,8 @@ def _train_loop(episodes: int, lr: float, gamma: float, clip: float, rollout: in
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
 
-def cb_watch_demo(steps: int, progress: gr.Progress = gr.Progress()):
+
+def cb_watch_demo(steps: int, progress: gr.Progress = gr.Progress()):  # noqa: B008
     """Load the pretrained model and render an episode — the main 'Watch' action."""
     global _trainer
     progress(0.1, desc="Loading agents…")
@@ -170,7 +176,10 @@ def cb_quick_train():
     """One-click training with sensible defaults."""
     global _trainer, _log, _training_active, _training_thread
     if _training_active:
-        return "⚠️ Training is already running. Check the Mission Report tab.", gr.update()
+        return (
+            "⚠️ Training is already running. Check the Mission Report tab.",
+            gr.update(),
+        )
 
     _trainer = _init_trainer()
     _load_pretrained(_trainer)
@@ -184,7 +193,7 @@ def cb_quick_train():
     )
     _training_thread.start()
     return (
-        "✅ Quick training started! 200 episodes with recommended settings.\n"
+        "✅ Quick training started! 200 episodes with recommended settings.\n"  # noqa: ISC004
         "Go to the **📈 Mission Report** tab and click **Refresh** to watch progress.",
         gr.update(),
     )
@@ -256,7 +265,7 @@ def cb_evaluate(n_eps: int):
     team_r = results["team_reward"]
     grade, label, _ = _reward_to_score(team_r)
     per_agent_md = "\n".join(
-        f"| Agent {i+1} | `{r:+.3f}` |"
+        f"| Agent {i + 1} | `{r:+.3f}` |"
         for i, (_, r) in enumerate(results["mean_reward_per_agent"].items())
     )
 
@@ -268,7 +277,7 @@ def cb_evaluate(n_eps: int):
 | Metric | Value |
 |---|---|
 | **Team Score** | `{team_r:+.3f}` |
-| **Avg Episode Length** | `{results['mean_episode_length']:.0f} steps` |
+| **Avg Episode Length** | `{results["mean_episode_length"]:.0f} steps` |
 
 **Per-Agent Breakdown:**
 
@@ -397,7 +406,6 @@ footer { display: none !important; }
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="The Swarm Architect") as demo:
-
     # ── Hero ─────────────────────────────────────────────────────────────────
     gr.HTML("""
     <div class="hero">
@@ -409,12 +417,10 @@ with gr.Blocks(title="The Swarm Architect") as demo:
     """)
 
     with gr.Tabs():
-
         # ═══════════════════════════════════════════════════════════════════
         # Tab 1 — The Mission
         # ═══════════════════════════════════════════════════════════════════
         with gr.Tab("🏠 The Mission"):
-
             gr.HTML("""
             <div style="text-align:center; padding: 1rem 0 1.5rem;">
                 <p style="color:#94a3b8; font-size:1.05rem; max-width:640px; margin:0 auto;">
@@ -504,7 +510,6 @@ with gr.Blocks(title="The Swarm Architect") as demo:
         # Tab 2 — Watch the Swarm
         # ═══════════════════════════════════════════════════════════════════
         with gr.Tab("👁️ Watch the Swarm"):
-
             gr.HTML("""
             <div style="padding:0.5rem 0 1.2rem;">
                 <div style="font-size:1.1rem; font-weight:600; color:#e2e8f0;">
@@ -520,9 +525,12 @@ with gr.Blocks(title="The Swarm Architect") as demo:
             with gr.Row():
                 with gr.Column(scale=1, min_width=260):
                     ep_steps = gr.Slider(
-                        10, 50, value=30, step=5,
+                        10,
+                        50,
+                        value=30,
+                        step=5,
                         label="How many steps to simulate",
-                        info="More steps = longer episode (default 30 is a good starting point)"
+                        info="More steps = longer episode (default 30 is a good starting point)",
                     )
                     btn_watch = gr.Button("▶ Watch the Agents", variant="primary")
 
@@ -563,7 +571,6 @@ with gr.Blocks(title="The Swarm Architect") as demo:
         # Tab 3 — Train Your Swarm
         # ═══════════════════════════════════════════════════════════════════
         with gr.Tab("⚡ Train Your Swarm"):
-
             gr.HTML("""
             <div style="padding:0.5rem 0 1.2rem;">
                 <div style="font-size:1.1rem; font-weight:600; color:#e2e8f0;">
@@ -593,13 +600,16 @@ with gr.Blocks(title="The Swarm Architect") as demo:
             """)
 
             with gr.Row():
-                btn_quick = gr.Button("⚡ Start Quick Training (200 episodes)", variant="primary")
+                btn_quick = gr.Button(
+                    "⚡ Start Quick Training (200 episodes)", variant="primary"
+                )
                 btn_stop = gr.Button("⏹ Stop Training", variant="stop")
 
             quick_status = gr.Textbox(
                 label="Training status",
-                interactive=False, lines=2,
-                placeholder="Click Start to begin…"
+                interactive=False,
+                lines=2,
+                placeholder="Click Start to begin…",
             )
 
             gr.HTML("<div style='height:1rem'></div>")
@@ -615,36 +625,53 @@ with gr.Blocks(title="The Swarm Architect") as demo:
                 with gr.Row():
                     with gr.Column():
                         adv_episodes = gr.Slider(
-                            50, 2000, value=300, step=50,
+                            50,
+                            2000,
+                            value=300,
+                            step=50,
                             label="Number of training episodes",
-                            info="More episodes = better agents, but takes longer"
+                            info="More episodes = better agents, but takes longer",
                         )
                         adv_lr = gr.Slider(
-                            1e-5, 1e-2, value=3e-4, step=1e-5,
+                            1e-5,
+                            1e-2,
+                            value=3e-4,
+                            step=1e-5,
                             label="Learning speed",
-                            info="How fast agents update their strategy (default 0.0003)"
+                            info="How fast agents update their strategy (default 0.0003)",
                         )
                     with gr.Column():
                         adv_gamma = gr.Slider(
-                            0.80, 0.999, value=0.95, step=0.005,
+                            0.80,
+                            0.999,
+                            value=0.95,
+                            step=0.005,
                             label="How far ahead agents think",
-                            info="Higher = agents plan further into the future (default 0.95)"
+                            info="Higher = agents plan further into the future (default 0.95)",
                         )
                         adv_clip = gr.Slider(
-                            0.05, 0.5, value=0.2, step=0.05,
+                            0.05,
+                            0.5,
+                            value=0.2,
+                            step=0.05,
                             label="How cautiously agents update",
-                            info="Lower = more careful updates, less likely to forget (default 0.2)"
+                            info="Lower = more careful updates, less likely to forget (default 0.2)",
                         )
                         adv_rollout = gr.Slider(
-                            64, 512, value=128, step=64,
+                            64,
+                            512,
+                            value=128,
+                            step=64,
                             label="Experience batch size",
-                            info="Steps collected before each learning update (default 128)"
+                            info="Steps collected before each learning update (default 128)",
                         )
 
                 btn_custom = gr.Button("▶ Start Custom Training", variant="secondary")
                 custom_status = gr.Textbox(
-                    label="", interactive=False, lines=1,
-                    placeholder="Status will appear here…"
+                    label="",
+                    interactive=False,
+                    lines=1,
+                    placeholder="Status will appear here…",
                 )
 
             btn_quick.click(cb_quick_train, outputs=[quick_status, gr.State()])
@@ -688,7 +715,6 @@ with gr.Blocks(title="The Swarm Architect") as demo:
         # Tab 4 — Mission Report
         # ═══════════════════════════════════════════════════════════════════
         with gr.Tab("📈 Mission Report"):
-
             gr.HTML("""
             <div style="padding:0.5rem 0 1rem;">
                 <div style="font-size:1.1rem; font-weight:600; color:#e2e8f0;">
@@ -704,11 +730,15 @@ with gr.Blocks(title="The Swarm Architect") as demo:
                 btn_refresh = gr.Button("🔄 Refresh Report", variant="primary")
                 with gr.Column(scale=3):
                     report_status = gr.Textbox(
-                        label="Live status", interactive=False, lines=2,
-                        placeholder="Status appears here after training starts…"
+                        label="Live status",
+                        interactive=False,
+                        lines=2,
+                        placeholder="Status appears here after training starts…",
                     )
 
-            report_summary = gr.Markdown("*Start training, then refresh to see your results.*")
+            report_summary = gr.Markdown(
+                "*Start training, then refresh to see your results.*"
+            )
 
             with gr.Row():
                 training_plot = gr.Plot(label="Training Progress")
@@ -735,9 +765,14 @@ with gr.Blocks(title="The Swarm Architect") as demo:
             """)
 
             with gr.Row():
-                n_eval = gr.Slider(1, 10, value=3, step=1,
-                                   label="Number of test episodes",
-                                   info="More episodes = more reliable score")
+                n_eval = gr.Slider(
+                    1,
+                    10,
+                    value=3,
+                    step=1,
+                    label="Number of test episodes",
+                    info="More episodes = more reliable score",
+                )
                 btn_eval = gr.Button("📊 Test My Agents", variant="primary")
 
             eval_results = gr.Markdown("*Run a test to see your agents' grade.*")

@@ -55,7 +55,7 @@ In plain English: *move the Q-value estimate toward the real return we observed.
 def update_episode(episode, Q, alpha, gamma):
     G = 0  # discounted return, calculated backwards from the end
     for state, action, reward in reversed(episode):
-        G = reward + gamma * G         # actual return from this step onward
+        G = reward + gamma * G  # actual return from this step onward
         Q[state, action] += alpha * (G - Q[state, action])
 ```
 

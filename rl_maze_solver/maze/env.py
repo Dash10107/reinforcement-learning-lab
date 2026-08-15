@@ -3,13 +3,14 @@ Enhanced MazeEnv — works with both DFS corridor mazes and open random mazes.
 """
 
 from __future__ import annotations
-import numpy as np
+
 import gymnasium as gym
+import numpy as np
 from gymnasium import spaces
 
 
 class MazeEnv(gym.Env):
-    metadata = {"render_modes": []}
+    metadata = {"render_modes": []}  # noqa: RUF012
 
     def __init__(self, grid: np.ndarray):
         super().__init__()

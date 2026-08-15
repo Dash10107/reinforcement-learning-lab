@@ -34,8 +34,9 @@ The agent keeps track of how well each arm has done so far:
 
 ```python
 # Start knowing nothing — equal estimates for all arms
-Q = [0.0] * n_arms          # estimated value of each arm
-N = [0]   * n_arms          # how many times we've pulled each arm
+Q = [0.0] * n_arms  # estimated value of each arm
+N = [0] * n_arms  # how many times we've pulled each arm
+
 
 def update(arm, reward):
     N[arm] += 1
@@ -68,11 +69,12 @@ Most of the time (probability `1 - ε`), pick the arm with the highest estimate.
 ```python
 import random
 
+
 def choose_arm(Q, epsilon):
     if random.random() < epsilon:
-        return random.randint(0, len(Q) - 1)   # explore: random arm
+        return random.randint(0, len(Q) - 1)  # explore: random arm
     else:
-        return Q.index(max(Q))                  # exploit: best known arm
+        return Q.index(max(Q))  # exploit: best known arm
 ```
 
 That's it. Two lines that balance the explore-exploit tradeoff.

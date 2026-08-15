@@ -4,13 +4,15 @@ Returns structured data for both the UI and the visualization layer.
 """
 
 from __future__ import annotations
-import numpy as np
-import gymnasium as gym
+
 from dataclasses import dataclass, field
+
+import gymnasium as gym
+import numpy as np
 from stable_baselines3 import SAC
 
-
 # ── Telemetry data structures ─────────────────────────────────────────────────
+
 
 @dataclass
 class StepData:
@@ -23,7 +25,7 @@ class StepData:
     left_leg: bool
     right_leg: bool
     reward: float
-    action_main: float   # main engine throttle [-1, 1]
+    action_main: float  # main engine throttle [-1, 1]
     action_lateral: float  # lateral thruster [-1, 1]
 
 
@@ -47,7 +49,9 @@ class EpisodeResult:
 
     @property
     def status_emoji(self) -> str:
-        return {"PERFECT": "🏆", "LANDED": "✅", "PARTIAL": "⚠️", "CRASHED": "💥"}[self.status]
+        return {"PERFECT": "🏆", "LANDED": "✅", "PARTIAL": "⚠️", "CRASHED": "💥"}[
+            self.status
+        ]
 
     @property
     def xs(self) -> list[float]:
@@ -91,7 +95,9 @@ class MissionResult:
     def success_rate(self) -> float:
         if not self.episodes:
             return 0.0
-        return sum(1 for e in self.episodes if e.total_reward >= 150) / len(self.episodes)
+        return sum(1 for e in self.episodes if e.total_reward >= 150) / len(
+            self.episodes
+        )
 
     @property
     def avg_reward(self) -> float:
@@ -107,6 +113,7 @@ class MissionResult:
 
 
 # ── Runner ────────────────────────────────────────────────────────────────────
+
 
 def run_mission(
     model: SAC,
@@ -125,7 +132,7 @@ def run_mission(
     mission = MissionResult()
     all_frames: list[list[np.ndarray]] = []
 
-    env_kwargs = dict(
+    env_kwargs = dict(  # noqa: C408
         continuous=True,
         gravity=gravity,
         enable_wind=enable_wind,
@@ -136,7 +143,9 @@ def run_mission(
 
     for ep_idx in range(n_episodes):
         if progress_cb:
-            progress_cb(ep_idx / n_episodes, f"Running mission {ep_idx + 1}/{n_episodes}…")
+            progress_cb(
+                ep_idx / n_episodes, f"Running mission {ep_idx + 1}/{n_episodes}…"
+            )
 
         env = gym.make("LunarLander-v3", **env_kwargs)
         obs, _ = env.reset()
@@ -149,15 +158,21 @@ def run_mission(
             action, _ = model.predict(obs, deterministic=True)
             next_obs, reward, terminated, truncated, _ = env.step(action)
 
-            result.steps.append(StepData(
-                x=float(obs[0]), y=float(obs[1]),
-                vx=float(obs[2]), vy=float(obs[3]),
-                angle=float(obs[4]), angular_vel=float(obs[5]),
-                left_leg=bool(obs[6]), right_leg=bool(obs[7]),
-                reward=float(reward),
-                action_main=float(action[0]),
-                action_lateral=float(action[1]),
-            ))
+            result.steps.append(
+                StepData(
+                    x=float(obs[0]),
+                    y=float(obs[1]),
+                    vx=float(obs[2]),
+                    vy=float(obs[3]),
+                    angle=float(obs[4]),
+                    angular_vel=float(obs[5]),
+                    left_leg=bool(obs[6]),
+                    right_leg=bool(obs[7]),
+                    reward=float(reward),
+                    action_main=float(action[0]),
+                    action_lateral=float(action[1]),
+                )
+            )
             result.total_reward += float(reward)
 
             if render:

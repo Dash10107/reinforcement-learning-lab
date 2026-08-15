@@ -8,24 +8,32 @@ A complete Model-Based Reinforcement Learning demonstration:
 """
 
 from __future__ import annotations
+
 import os
+
+import gradio as gr
+import gymnasium as gym
 import numpy as np
 import torch
-import gymnasium as gym
-import gradio as gr
-
 from model.dynamics import (
-    DynamicsModel, EnsembleDynamics,
-    load_pretrained, pendulum_reward_batch, STATE_NAMES,
+    STATE_NAMES,
+    DynamicsModel,
+    EnsembleDynamics,
+    load_pretrained,
 )
-from model.train import TrainingState, start_training_thread, ENSEMBLE_PATH
+from model.train import ENSEMBLE_PATH, TrainingState, start_training_thread
 from planning.mpc import (
-    random_shooting_mpc, run_mpc_episode, run_random_episode,
+    run_mpc_episode,
+    run_random_episode,
 )
 from viz.plots import (
-    single_step_comparison, imagination_comparison,
-    training_curve, mpc_episode_chart, make_mpc_gif,
-    uncertainty_heatmap, empty_fig,
+    empty_fig,
+    imagination_comparison,
+    make_mpc_gif,
+    mpc_episode_chart,
+    single_step_comparison,
+    training_curve,
+    uncertainty_heatmap,
 )
 
 # ── Global state ──────────────────────────────────────────────────────────────
@@ -37,8 +45,9 @@ _pretrained: DynamicsModel | None = None
 # Load pre-trained single model on startup
 try:
     _pretrained = load_pretrained("dynamics_model.pth")
-except Exception:
+except Exception:  # noqa: BLE001
     _pretrained = None
+
 
 # Load ensemble if already trained
 def _load_ensemble() -> EnsembleDynamics | None:
@@ -49,6 +58,7 @@ def _load_ensemble() -> EnsembleDynamics | None:
         return e
     return None
 
+
 _ensemble = _load_ensemble()
 
 
@@ -58,6 +68,7 @@ def _best_model():
 
 
 # ── Tab 1: Interactive Explorer ───────────────────────────────────────────────
+
 
 def cb_explore(cos_th, sin_th, vel, torque):
     model = _best_model()
@@ -75,8 +86,11 @@ def cb_explore(cos_th, sin_th, vel, torque):
 
     # Model prediction
     if model is None:
-        return frame, empty_fig("No model loaded. Train one in the Training tab."), \
-               "*No model available.*"
+        return (
+            frame,
+            empty_fig("No model loaded. Train one in the Training tab."),
+            "*No model available.*",
+        )
 
     if isinstance(model, EnsembleDynamics):
         pred_next, pred_std = model.predict_np(state, float(torque))
@@ -88,27 +102,32 @@ def cb_explore(cos_th, sin_th, vel, torque):
 
     # Markdown table
     rows = "\n".join(
-        f"| `{n}` | `{r:.4f}` | `{p:.4f}` | `{abs(r-p):.4f}` |"
+        f"| `{n}` | `{r:.4f}` | `{p:.4f}` | `{abs(r - p):.4f}` |"
         for n, r, p in zip(STATE_NAMES, real_next, pred_next)
     )
     unc_col = ""
     if pred_std is not None:
         rows = "\n".join(
-            f"| `{n}` | `{r:.4f}` | `{p:.4f}` | `{abs(r-p):.4f}` | `±{s:.4f}` |"
+            f"| `{n}` | `{r:.4f}` | `{p:.4f}` | `{abs(r - p):.4f}` | `±{s:.4f}` |"
             for n, r, p, s in zip(STATE_NAMES, real_next, pred_next, pred_std)
         )
         unc_col = " Uncertainty |"
 
     table = f"""
 | State | Real | Predicted | Error |{unc_col}
-|---|---|---|---|{'---|' if pred_std is not None else ''}
+|---|---|---|---|{"---|" if pred_std is not None else ""}
 {rows}
 """
-    model_label = "Ensemble (5 models)" if isinstance(model, EnsembleDynamics) else "Single model (pretrained)"
+    model_label = (
+        "Ensemble (5 models)"
+        if isinstance(model, EnsembleDynamics)
+        else "Single model (pretrained)"
+    )
     return frame, fig, f"**Model:** {model_label}\n{table}"
 
 
 # ── Tab 2: Train ──────────────────────────────────────────────────────────────
+
 
 def cb_start_train(n_steps, epochs):
     global _train_state
@@ -141,17 +160,19 @@ def cb_refresh_train():
 
 # ── Tab 3: Imagination Rollout ────────────────────────────────────────────────
 
-def cb_imagination(start_preset, horizon, action_val,
-                   progress: gr.Progress = gr.Progress()):
+
+def cb_imagination(
+    start_preset, horizon, action_val, progress: gr.Progress = gr.Progress()
+):  # noqa: B008
     model = _best_model()
     if model is None:
         return empty_fig("No model. Train one first."), "*No model available.*"
 
     PRESETS = {
-        "⬇️ Hanging down (θ=π)":  (np.pi, 0.0),
-        "➡️ Horizontal (θ=π/2)":  (np.pi / 2, 0.0),
+        "⬇️ Hanging down (θ=π)": (np.pi, 0.0),
+        "➡️ Horizontal (θ=π/2)": (np.pi / 2, 0.0),
         "⬆️ Near upright (θ=0.3)": (0.3, 0.5),
-        "🌀 Spinning fast":          (np.pi / 3, 6.0),
+        "🌀 Spinning fast": (np.pi / 3, 6.0),
     }
     theta0, vel0 = PRESETS[start_preset]
     init_state = np.array([np.cos(theta0), np.sin(theta0), vel0], dtype=np.float32)
@@ -169,7 +190,7 @@ def cb_imagination(start_preset, horizon, action_val,
         if term or trunc:
             env.reset()
     env.close()
-    real_traj = np.array(real_traj[:int(horizon) + 1])
+    real_traj = np.array(real_traj[: int(horizon) + 1])
 
     # Roll out in model
     progress(0.5, desc="Rolling out in model…")
@@ -220,8 +241,8 @@ def cb_imagination(start_preset, horizon, action_val,
 
 # ── Tab 4: MPC Control ────────────────────────────────────────────────────────
 
-def cb_run_mpc(horizon, n_samples, max_steps,
-               progress: gr.Progress = gr.Progress()):
+
+def cb_run_mpc(horizon, n_samples, max_steps, progress: gr.Progress = gr.Progress()):  # noqa: B008
     model = _best_model()
     if model is None:
         return None, empty_fig("No model. Train one first."), "*No model.*"
@@ -251,8 +272,8 @@ def cb_run_mpc(horizon, n_samples, max_steps,
 
 | Metric | MPC | Random | Improvement |
 |---|---|---|---|
-| **Total Reward** | `{mpc_res['total_reward']:.1f}` | `{rand_res['total_reward']:.1f}` | `{improvement:+.1f}` |
-| **Steps** | `{mpc_res['steps']}` | `{len(rand_res['rewards'])}` | — |
+| **Total Reward** | `{mpc_res["total_reward"]:.1f}` | `{rand_res["total_reward"]:.1f}` | `{improvement:+.1f}` |
+| **Steps** | `{mpc_res["steps"]}` | `{len(rand_res["rewards"])}` | — |
 | **Planning horizon** | `{horizon}` | — | — |
 | **Candidates/step** | `{n_samples}` | — | — |
 
@@ -265,12 +286,14 @@ def cb_run_mpc(horizon, n_samples, max_steps,
 
 # ── Tab 5: Uncertainty ────────────────────────────────────────────────────────
 
-def cb_uncertainty(progress: gr.Progress = gr.Progress()):
+
+def cb_uncertainty(progress: gr.Progress = gr.Progress()):  # noqa: B008
     global _ensemble
     _ensemble = _ensemble or _load_ensemble()
     if _ensemble is None:
-        return empty_fig("Train an ensemble first (Training tab)."), \
-               "*Ensemble not trained yet.*"
+        return empty_fig(
+            "Train an ensemble first (Training tab)."
+        ), "*Ensemble not trained yet.*"
     progress(0.3, desc="Computing uncertainty map…")
     fig = uncertainty_heatmap(_ensemble, n_grid=35)
     progress(1.0)
@@ -376,7 +399,6 @@ footer { display:none !important; }
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="MBRL Pendulum Playground") as demo:
-
     gr.HTML("""
     <div class="mbrl-header">
         <div class="mbrl-title">🌀 MBRL Pendulum Playground</div>
@@ -391,7 +413,6 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
     """)
 
     with gr.Tabs():
-
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Interactive Explorer
         # ══════════════════════════════════════════════════════════════════
@@ -411,13 +432,29 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, min_width=280):
-                    gr.HTML('<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.68rem;color:#4a5568;text-transform:uppercase;margin-bottom:0.4rem;">PENDULUM STATE</div>')
-                    c_th = gr.Slider(-1, 1, value=1.0, step=0.01, label="cos θ  (1=upright, -1=hanging)")
-                    s_th = gr.Slider(-1, 1, value=0.0, step=0.01, label="sin θ  (0=upright)")
-                    vel  = gr.Slider(-8, 8, value=0.0, step=0.1, label="Angular velocity  (rad/s)")
+                    gr.HTML(
+                        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#4a5568;text-transform:uppercase;margin-bottom:0.4rem;\">PENDULUM STATE</div>"
+                    )
+                    c_th = gr.Slider(
+                        -1,
+                        1,
+                        value=1.0,
+                        step=0.01,
+                        label="cos θ  (1=upright, -1=hanging)",
+                    )
+                    s_th = gr.Slider(
+                        -1, 1, value=0.0, step=0.01, label="sin θ  (0=upright)"
+                    )
+                    vel = gr.Slider(
+                        -8, 8, value=0.0, step=0.1, label="Angular velocity  (rad/s)"
+                    )
 
-                    gr.HTML('<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.68rem;color:#4a5568;text-transform:uppercase;margin:0.6rem 0 0.4rem;">ACTION</div>')
-                    trq  = gr.Slider(-2, 2, value=0.0, step=0.1, label="Torque applied  (N·m)")
+                    gr.HTML(
+                        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#4a5568;text-transform:uppercase;margin:0.6rem 0 0.4rem;\">ACTION</div>"
+                    )
+                    trq = gr.Slider(
+                        -2, 2, value=0.0, step=0.1, label="Torque applied  (N·m)"
+                    )
                     btn_explore = gr.Button("▶ PREDICT", variant="primary")
 
                     gr.HTML("""
@@ -436,14 +473,16 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
                     exp_frame = gr.Image(label="Pendulum State", height=280)
 
                 with gr.Column(scale=2):
-                    exp_fig   = gr.Plot(label="Real vs Predicted Next State")
+                    exp_fig = gr.Plot(label="Real vs Predicted Next State")
                     exp_table = gr.Markdown("*Click Predict to compare real vs model.*")
 
             for inp in [c_th, s_th, vel, trq]:
-                inp.change(cb_explore, [c_th, s_th, vel, trq],
-                           [exp_frame, exp_fig, exp_table])
-            btn_explore.click(cb_explore, [c_th, s_th, vel, trq],
-                              [exp_frame, exp_fig, exp_table])
+                inp.change(
+                    cb_explore, [c_th, s_th, vel, trq], [exp_frame, exp_fig, exp_table]
+                )
+            btn_explore.click(
+                cb_explore, [c_th, s_th, vel, trq], [exp_frame, exp_fig, exp_table]
+            )
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 2 — Train Dynamics Model
@@ -465,15 +504,17 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1):
-                    train_steps  = gr.Slider(500, 8000, value=3000, step=500,
-                                             label="Transitions to collect")
-                    train_epochs = gr.Slider(20, 150, value=80, step=10,
-                                             label="Training epochs")
+                    train_steps = gr.Slider(
+                        500, 8000, value=3000, step=500, label="Transitions to collect"
+                    )
+                    train_epochs = gr.Slider(
+                        20, 150, value=80, step=10, label="Training epochs"
+                    )
                     with gr.Row():
                         btn_train = gr.Button("▶ START TRAINING", variant="primary")
-                        btn_stop  = gr.Button("⏹ STOP", variant="stop")
-                    btn_refresh  = gr.Button("🔄 REFRESH", variant="secondary")
-                    train_msg    = gr.Textbox(label="Status", lines=2, interactive=False)
+                        btn_stop = gr.Button("⏹ STOP", variant="stop")
+                    btn_refresh = gr.Button("🔄 REFRESH", variant="secondary")
+                    train_msg = gr.Textbox(label="Status", lines=2, interactive=False)
 
                     gr.HTML("""
                     <div style="background:#161b27;border:1px solid #1c2333;border-radius:6px;padding:0.9rem;margin-top:0.8rem;">
@@ -492,7 +533,9 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
                     """)
 
                 with gr.Column(scale=2):
-                    train_status_md = gr.Markdown("*Start training to see live metrics.*")
+                    train_status_md = gr.Markdown(
+                        "*Start training to see live metrics.*"
+                    )
                     train_fig = gr.Plot(label="Training Curves")
 
             btn_train.click(cb_start_train, [train_steps, train_epochs], [train_msg])
@@ -519,24 +562,33 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, min_width=280):
-                    imag_preset  = gr.Dropdown(
-                        ["⬇️ Hanging down (θ=π)", "➡️ Horizontal (θ=π/2)",
-                         "⬆️ Near upright (θ=0.3)", "🌀 Spinning fast"],
+                    imag_preset = gr.Dropdown(
+                        [
+                            "⬇️ Hanging down (θ=π)",
+                            "➡️ Horizontal (θ=π/2)",
+                            "⬆️ Near upright (θ=0.3)",
+                            "🌀 Spinning fast",
+                        ],
                         value="⬇️ Hanging down (θ=π)",
                         label="Starting state",
                     )
-                    imag_horizon = gr.Slider(5, 50, value=25, step=5, label="Rollout horizon (steps)")
-                    imag_action  = gr.Slider(-2, 2, value=0.0, step=0.1,
-                                            label="Constant action (torque)")
-                    btn_imag     = gr.Button("🔮 IMAGINE", variant="primary")
-                    imag_status  = gr.Markdown("")
+                    imag_horizon = gr.Slider(
+                        5, 50, value=25, step=5, label="Rollout horizon (steps)"
+                    )
+                    imag_action = gr.Slider(
+                        -2, 2, value=0.0, step=0.1, label="Constant action (torque)"
+                    )
+                    btn_imag = gr.Button("🔮 IMAGINE", variant="primary")
+                    imag_status = gr.Markdown("")
 
                 with gr.Column(scale=3):
                     imag_fig = gr.Plot(label="Real vs Imagined Trajectory")
 
-            btn_imag.click(cb_imagination,
-                           [imag_preset, imag_horizon, imag_action],
-                           [imag_fig, imag_status])
+            btn_imag.click(
+                cb_imagination,
+                [imag_preset, imag_horizon, imag_action],
+                [imag_fig, imag_status],
+            )
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 4 — MPC Control
@@ -558,13 +610,20 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, min_width=280):
-                    mpc_horizon  = gr.Slider(5, 30, value=15, step=5,
-                                             label="Planning horizon  (steps)")
-                    mpc_samples  = gr.Slider(64, 1024, value=512, step=64,
-                                             label="Candidate sequences per step")
-                    mpc_maxsteps = gr.Slider(50, 300, value=200, step=50,
-                                             label="Episode length  (steps)")
-                    btn_mpc      = gr.Button("🎯 RUN MPC EPISODE", variant="primary")
+                    mpc_horizon = gr.Slider(
+                        5, 30, value=15, step=5, label="Planning horizon  (steps)"
+                    )
+                    mpc_samples = gr.Slider(
+                        64,
+                        1024,
+                        value=512,
+                        step=64,
+                        label="Candidate sequences per step",
+                    )
+                    mpc_maxsteps = gr.Slider(
+                        50, 300, value=200, step=50, label="Episode length  (steps)"
+                    )
+                    btn_mpc = gr.Button("🎯 RUN MPC EPISODE", variant="primary")
 
                     gr.HTML("""
                     <div style="background:#161b27;border:1px solid #1c2333;border-radius:6px;padding:0.9rem;margin-top:0.8rem;">
@@ -580,13 +639,18 @@ with gr.Blocks(title="MBRL Pendulum Playground") as demo:
                     """)
 
                 with gr.Column(scale=1):
-                    mpc_gif    = gr.Image(label="MPC Episode Replay", type="filepath", height=320)
+                    mpc_gif = gr.Image(
+                        label="MPC Episode Replay", type="filepath", height=320
+                    )
                     mpc_status = gr.Markdown("")
 
             mpc_chart = gr.Plot(label="Episode Analysis")
 
-            btn_mpc.click(cb_run_mpc, [mpc_horizon, mpc_samples, mpc_maxsteps],
-                          [mpc_gif, mpc_chart, mpc_status])
+            btn_mpc.click(
+                cb_run_mpc,
+                [mpc_horizon, mpc_samples, mpc_maxsteps],
+                [mpc_gif, mpc_chart, mpc_status],
+            )
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 5 — Uncertainty Map
