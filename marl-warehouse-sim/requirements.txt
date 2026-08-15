@@ -1,4 +1,4 @@
-gradio>=6.0.0
+gradio>=6.23.1
 numpy
 torch
 matplotlib
