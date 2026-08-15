@@ -11,9 +11,14 @@ pinned: false
 
 # RL Maze Solver — Interactive Reinforcement Learning Playground
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/rl_maze_solver"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 An interactive playground where you watch three different reinforcement learning algorithms learn to escape mazes in real time. Choose a difficulty, pick an algorithm, and watch the animated replay showing each step the agent took to find the exit. An algorithm race mode lets all three strategies compete on the same maze so you can see their strengths and weaknesses directly.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/rl_maze_solver)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -128,7 +133,7 @@ rl_maze_solver/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd rl_maze_solver
 pip install -r requirements.txt
 python app.py

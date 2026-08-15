@@ -11,9 +11,14 @@ pinned: false
 
 # Unity RL Huggy Demo — Deep Reinforcement Learning in a 3D Game Engine
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/Unity-RL-Huggy-Demo"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 An interactive demonstration of a reinforcement learning agent trained entirely inside Unity using ML-Agents. The agent, Huggy, is a dog character that learns to fetch a stick thrown by the player. It has never been told how to run, turn, or time its approach — it discovered all of these behaviours through millions of trial-and-error episodes in a physics simulation.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/Unity-RL-Huggy-Demo)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -87,7 +92,7 @@ This project is intentionally minimal on the Python side — the interesting wor
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd Unity-RL-Huggy-Demo
 pip install gradio
 python app.py

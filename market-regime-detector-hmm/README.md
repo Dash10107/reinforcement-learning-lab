@@ -11,9 +11,14 @@ pinned: false
 
 # Market Regime Detector — HMM Financial Analytics
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/market-regime-detector-hmm"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 A financial analytics platform that uses Gaussian Hidden Markov Models to identify which market regime a stock is currently in: Bull, Neutral, Bear, or Crisis. You enter a ticker symbol and a date range, and the system downloads the data, fits a statistical model, colours the price chart by regime, shows how the model transitions between states, and backtests a simple regime-switching trading strategy.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/market-regime-detector-hmm)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -111,7 +116,7 @@ market-regime-detector-hmm/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd market-regime-detector-hmm
 pip install -r requirements.txt
 python app.py

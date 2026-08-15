@@ -11,9 +11,14 @@ pinned: false
 
 # Smart Grid Energy Optimizer — DQN Battery Storage Management
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/smart-grid-energy-optimizer"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 A reinforcement learning platform for managing a battery energy storage system connected to an electricity grid. The agent learns when to charge the battery (buy cheap electricity), when to discharge it (sell at peak prices), and how to factor in solar generation and building load — all without knowing future prices in advance. Three strategies are compared side by side: a DQN agent, an optimal dynamic programming solver, and a simple rule-based heuristic.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/smart-grid-energy-optimizer)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -112,7 +117,7 @@ smart-grid-energy-optimizer/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd smart-grid-energy-optimizer
 pip install -r requirements.txt
 python app.py

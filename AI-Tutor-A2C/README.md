@@ -11,9 +11,14 @@ pinned: false
 
 # AI Tutor Pro — Personalized Learning with Actor-Critic RL
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/AI-Tutor-A2C"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 An interactive reinforcement learning system that acts as an intelligent tutor. You set a student's current proficiency across five subjects, and a trained A2C agent recommends which subject to focus on next in order to reach mastery as efficiently as possible. You can watch it simulate a full learning path, inspect why it made each decision, and even retrain the agent from scratch.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/AI-Tutor-A2C)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -90,7 +95,7 @@ AI-Tutor-A2C/
 Clone and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd AI-Tutor-A2C
 pip install -r requirements.txt
 ```

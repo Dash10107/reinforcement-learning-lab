@@ -11,9 +11,14 @@ pinned: false
 
 # MBRL Pendulum Playground — Model-Based Reinforcement Learning
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/mbrl-pendulum-playground"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 A complete Model-Based Reinforcement Learning demonstration using the classic Pendulum control task. Instead of learning a policy directly from environment interactions, this system first learns a model of how the pendulum moves, then uses that model to plan actions without needing to interact with the real environment at every step. You can train the dynamics model, watch it imagine future trajectories, run a planning controller, and visualise where the model is uncertain.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/mbrl-pendulum-playground)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -121,7 +126,7 @@ mbrl-pendulum-playground/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd mbrl-pendulum-playground
 pip install -r requirements.txt
 python app.py

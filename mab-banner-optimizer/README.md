@@ -11,9 +11,14 @@ pinned: false
 
 # MAB Banner Optimizer — Ad Campaign Intelligence with Multi-Armed Bandits
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/mab-banner-optimizer"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 An interactive platform for understanding how advertising systems learn which banner to show. Six different bandit algorithms compete head-to-head on the same simulated ad campaign. You can watch their reward and regret curves diverge in real time, step through individual decisions in learner mode, and build custom campaign scenarios to test different conditions.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/mab-banner-optimizer)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -105,7 +110,7 @@ mab-banner-optimizer/
 ## Quick Setup
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd mab-banner-optimizer
 pip install -r requirements.txt
 python app.py

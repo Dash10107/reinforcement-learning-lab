@@ -11,9 +11,14 @@ pinned: false
 
 # Digital Calligrapher — Learning Aesthetics with RLHF
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/digital-calligrapher-rlhf"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 An interactive playground that teaches an AI your personal sense of beauty through pairwise comparisons. You look at two calligraphic brush strokes and pick the one that feels more elegant to you. Behind the scenes, a reward model updates its understanding of what you find aesthetically pleasing. After enough votes, the system can generate strokes that are genuinely optimised for your taste.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/digital-calligrapher-rlhf)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -107,7 +112,7 @@ The project is deliberately kept as a single file. The reward model, stroke gene
 Clone and install:
 
 ```bash
-git clone https://github.com/yourusername/reinforcement-learning-lab
+git clone https://github.com/Dash10107/reinforcement-learning-lab.git
 cd digital-calligrapher-rlhf
 pip install -r requirements.txt
 ```

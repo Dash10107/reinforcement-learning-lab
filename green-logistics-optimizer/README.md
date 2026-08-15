@@ -11,9 +11,14 @@ pinned: false
 
 # Green Logistics Optimizer — DQN Delivery Route Planning
 
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
+  <a href="https://huggingface.co/spaces/Dash10107/green-logistics-optimizer"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+</p>
+
 A reinforcement learning system that learns to plan urban delivery routes while minimising carbon emissions. A Deep Q-Network agent navigates a city grid, learning to avoid high-congestion zones that multiply fuel costs. You can compare the DQN agent against a greedy heuristic and an A* shortest-path solver, visualise their routes on a carbon heatmap, and retrain the agent from scratch.
 
-Live demo: [Hugging Face Space](https://huggingface.co/spaces/Dash10107/green-logistics-optimizer)
+**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
 
 ---
 
@@ -93,7 +98,7 @@ The key distinction is that A* minimises steps but not carbon. The DQN agent min
 
 Clone and install:
 
-    git clone https://github.com/yourusername/reinforcement-learning-lab
+    git clone https://github.com/Dash10107/reinforcement-learning-lab.git
     cd green-logistics-optimizer
     pip install -r requirements.txt
 
