@@ -30,36 +30,31 @@ import argparse
 
 # ─── Hyperparameters ─────────────────────────────────────────────────────────
 
-LR = 1e-3  # learning rate
-GAMMA = 0.99  # discount factor
-BATCH_SIZE = 64  # samples per training step
-BUFFER_SIZE = 10_000  # replay buffer capacity
-EPSILON_START = 1.0  # initial exploration probability
-EPSILON_END = 0.01  # minimum exploration probability
-EPSILON_DECAY = 0.995  # multiplicative decay per episode
-TARGET_UPDATE = 100  # update target network every N steps
-N_EPISODES = 500  # total training episodes
+LR             = 1e-3       # learning rate
+GAMMA          = 0.99       # discount factor
+BATCH_SIZE     = 64         # samples per training step
+BUFFER_SIZE    = 10_000     # replay buffer capacity
+EPSILON_START  = 1.0        # initial exploration probability
+EPSILON_END    = 0.01       # minimum exploration probability
+EPSILON_DECAY  = 0.995      # multiplicative decay per episode
+TARGET_UPDATE  = 100        # update target network every N steps
+N_EPISODES     = 500        # total training episodes
 
 # ─── Network ─────────────────────────────────────────────────────────────────
-
 
 class QNetwork(nn.Module):
     def __init__(self, state_dim, n_actions):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, n_actions),  # one Q-value per action
+            nn.Linear(state_dim, 128), nn.ReLU(),
+            nn.Linear(128, 128),       nn.ReLU(),
+            nn.Linear(128, n_actions),             # one Q-value per action
         )
 
     def forward(self, x):
         return self.net(x)
 
-
 # ─── Replay Buffer ────────────────────────────────────────────────────────────
-
 
 class ReplayBuffer:
     def __init__(self, capacity):
@@ -82,27 +77,25 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
-
 # ─── Agent ───────────────────────────────────────────────────────────────────
-
 
 class DQNAgent:
     def __init__(self, state_dim, n_actions):
-        self.n_actions = n_actions
+        self.n_actions  = n_actions
         self.online_net = QNetwork(state_dim, n_actions)
         self.target_net = QNetwork(state_dim, n_actions)
         self.target_net.load_state_dict(self.online_net.state_dict())
-        self.optimizer = optim.Adam(self.online_net.parameters(), lr=LR)
-        self.buffer = ReplayBuffer(BUFFER_SIZE)
-        self.epsilon = EPSILON_START
-        self.steps = 0
+        self.optimizer  = optim.Adam(self.online_net.parameters(), lr=LR)
+        self.buffer     = ReplayBuffer(BUFFER_SIZE)
+        self.epsilon    = EPSILON_START
+        self.steps      = 0
 
     def select_action(self, state):
         if random.random() < self.epsilon:
-            return random.randrange(self.n_actions)  # explore
+            return random.randrange(self.n_actions)         # explore
         with torch.no_grad():
             q_values = self.online_net(torch.FloatTensor(state))
-            return q_values.argmax().item()  # exploit
+            return q_values.argmax().item()                 # exploit
 
     def update(self):
         if len(self.buffer) < BATCH_SIZE:
@@ -115,7 +108,7 @@ class DQNAgent:
 
         # Target Q-values: r + γ * max Q(s', a') — computed using the target network
         with torch.no_grad():
-            next_q = self.target_net(next_states).max(1).values
+            next_q  = self.target_net(next_states).max(1).values
             target_q = rewards + GAMMA * next_q * (1 - dones)
 
         loss = F.mse_loss(current_q, target_q)
@@ -132,15 +125,13 @@ class DQNAgent:
     def decay_epsilon(self):
         self.epsilon = max(EPSILON_END, self.epsilon * EPSILON_DECAY)
 
-
 # ─── Training Loop ────────────────────────────────────────────────────────────
 
-
 def train(env_name):
-    env = gym.make(env_name)
+    env       = gym.make(env_name)
     state_dim = env.observation_space.shape[0]
     n_actions = env.action_space.n
-    agent = DQNAgent(state_dim, n_actions)
+    agent     = DQNAgent(state_dim, n_actions)
 
     for episode in range(N_EPISODES):
         state, _ = env.reset()
@@ -155,18 +146,15 @@ def train(env_name):
             agent.buffer.push(state, action, reward, next_state, float(done))
             agent.update()
 
-            state = next_state
+            state        = next_state
             total_reward += reward
 
         agent.decay_epsilon()
 
         if episode % 50 == 0:
-            print(
-                f"Ep {episode:4d} | Reward: {total_reward:7.1f} | ε: {agent.epsilon:.3f}"
-            )
+            print(f"Ep {episode:4d} | Reward: {total_reward:7.1f} | ε: {agent.epsilon:.3f}")
 
     env.close()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -205,28 +193,25 @@ import argparse
 
 # ─── Hyperparameters ─────────────────────────────────────────────────────────
 
-LR = 3e-4
-GAMMA = 0.99
-GAE_LAMBDA = 0.95  # λ for Generalised Advantage Estimation
-CLIP_EPS = 0.2  # PPO clipping range [1-ε, 1+ε]
-N_EPOCHS = 4  # gradient update passes per rollout
-ROLLOUT_LEN = 2048  # steps to collect before each update
-BATCH_SIZE = 64
-CONTINUOUS = False  # set True for continuous action spaces
+LR          = 3e-4
+GAMMA       = 0.99
+GAE_LAMBDA  = 0.95     # λ for Generalised Advantage Estimation
+CLIP_EPS    = 0.2      # PPO clipping range [1-ε, 1+ε]
+N_EPOCHS    = 4        # gradient update passes per rollout
+ROLLOUT_LEN = 2048     # steps to collect before each update
+BATCH_SIZE  = 64
+CONTINUOUS  = False    # set True for continuous action spaces
 
 # ─── Actor-Critic Network ─────────────────────────────────────────────────────
-
 
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super().__init__()
         self.shared = nn.Sequential(
-            nn.Linear(state_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, 64),
-            nn.Tanh(),
+            nn.Linear(state_dim, 64), nn.Tanh(),
+            nn.Linear(64, 64),        nn.Tanh(),
         )
-        self.actor = nn.Linear(64, action_dim)
+        self.actor  = nn.Linear(64, action_dim)
         self.critic = nn.Linear(64, 1)
         if CONTINUOUS:
             # Learnable log standard deviation (not state-dependent)
@@ -234,18 +219,16 @@ class ActorCritic(nn.Module):
 
     def forward(self, state):
         features = self.shared(state)
-        value = self.critic(features)
+        value    = self.critic(features)
         if CONTINUOUS:
             mean = self.actor(features)
-            std = self.log_std.exp().expand_as(mean)
+            std  = self.log_std.exp().expand_as(mean)
             return Normal(mean, std), value
         else:
             logits = self.actor(features)
             return Categorical(logits=logits), value
 
-
 # ─── Generalised Advantage Estimation ────────────────────────────────────────
-
 
 def compute_gae(rewards, values, dones, next_value, gamma=GAMMA, lam=GAE_LAMBDA):
     """
@@ -256,17 +239,13 @@ def compute_gae(rewards, values, dones, next_value, gamma=GAMMA, lam=GAE_LAMBDA)
     gae = 0
     values = values + [next_value]
     for step in reversed(range(len(rewards))):
-        delta = (
-            rewards[step] + gamma * values[step + 1] * (1 - dones[step]) - values[step]
-        )
-        gae = delta + gamma * lam * (1 - dones[step]) * gae
+        delta = rewards[step] + gamma * values[step + 1] * (1 - dones[step]) - values[step]
+        gae   = delta + gamma * lam * (1 - dones[step]) * gae
         advantages.insert(0, gae)
     returns = [adv + val for adv, val in zip(advantages, values[:-1])]
     return advantages, returns
 
-
 # ─── PPO Update ──────────────────────────────────────────────────────────────
-
 
 def ppo_update(net, optimizer, states, actions, old_log_probs, advantages, returns):
     advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
@@ -283,11 +262,9 @@ def ppo_update(net, optimizer, states, actions, old_log_probs, advantages, retur
                 new_log_probs = new_log_probs.sum(-1)
 
             # PPO clipped objective
-            ratio = (new_log_probs - old_log_probs[idx]).exp()
-            clipped = torch.clamp(ratio, 1 - CLIP_EPS, 1 + CLIP_EPS)
-            actor_loss = -torch.min(
-                ratio * advantages[idx], clipped * advantages[idx]
-            ).mean()
+            ratio    = (new_log_probs - old_log_probs[idx]).exp()
+            clipped  = torch.clamp(ratio, 1 - CLIP_EPS, 1 + CLIP_EPS)
+            actor_loss  = -torch.min(ratio * advantages[idx], clipped * advantages[idx]).mean()
             critic_loss = F.mse_loss(values.squeeze(), returns[idx])
             entropy_loss = -dist.entropy().mean()
 
@@ -298,21 +275,20 @@ def ppo_update(net, optimizer, states, actions, old_log_probs, advantages, retur
             torch.nn.utils.clip_grad_norm_(net.parameters(), 0.5)
             optimizer.step()
 
-
 # ─── Training Loop ────────────────────────────────────────────────────────────
 
-
 def train(env_name):
-    env = gym.make(env_name)
+    env       = gym.make(env_name)
     state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0] if CONTINUOUS else env.action_space.n
+    action_dim = (env.action_space.shape[0] if CONTINUOUS
+                  else env.action_space.n)
 
-    net = ActorCritic(state_dim, action_dim)
+    net       = ActorCritic(state_dim, action_dim)
     optimizer = torch.optim.Adam(net.parameters(), lr=LR)
 
-    state, _ = env.reset()
+    state, _  = env.reset()
     episode_rewards = []
-    current_reward = 0
+    current_reward  = 0
 
     states, actions, rewards, dones, log_probs, values = [], [], [], [], [], []
 
@@ -337,7 +313,7 @@ def train(env_name):
         log_probs.append(log_prob)
         values.append(value.item())
 
-        state = next_state
+        state          = next_state
         current_reward += reward
 
         if done:
@@ -352,8 +328,7 @@ def train(env_name):
             advantages, returns = compute_gae(rewards, values, dones, next_value.item())
 
             ppo_update(
-                net,
-                optimizer,
+                net, optimizer,
                 torch.stack(states),
                 torch.stack(actions),
                 torch.stack(log_probs).detach(),
@@ -363,13 +338,10 @@ def train(env_name):
             states, actions, rewards, dones, log_probs, values = [], [], [], [], [], []
 
             if episode_rewards:
-                print(
-                    f"Step {step:7d} | Mean reward (last 10): "
-                    f"{np.mean(episode_rewards[-10:]):7.1f}"
-                )
+                print(f"Step {step:7d} | Mean reward (last 10): "
+                      f"{np.mean(episode_rewards[-10:]):7.1f}")
 
     env.close()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -3,25 +3,23 @@ Analytics charts for the warehouse dashboard.
 """
 
 from __future__ import annotations
-
-import matplotlib
 import numpy as np
-
+import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
+import matplotlib.gridspec as gridspec
 from matplotlib.figure import Figure
 
-BG = "#0d1117"
-BG2 = "#161b22"
+BG   = "#0d1117"
+BG2  = "#161b22"
 GRID = "#21262d"
 TEXT = "#e2e8f0"
-DIM = "#4a5568"
-C_REWARD = "#10b981"
-C_DELIVERY = "#1890ff"
+DIM  = "#4a5568"
+C_REWARD    = "#10b981"
+C_DELIVERY  = "#1890ff"
 C_COLLISION = "#ef4444"
-C_RANDOM = "#f59e0b"
-C_TRAINED = "#10b981"
+C_RANDOM    = "#f59e0b"
+C_TRAINED   = "#10b981"
 
 
 def _style(ax, title="", xlabel="", ylabel=""):
@@ -31,14 +29,8 @@ def _style(ax, title="", xlabel="", ylabel=""):
         sp.set_color(GRID)
     ax.grid(color=GRID, linewidth=0.5, linestyle="--", alpha=0.6)
     if title:
-        ax.set_title(
-            title,
-            color=TEXT,
-            fontsize=9,
-            pad=7,
-            fontfamily="monospace",
-            fontweight="bold",
-        )
+        ax.set_title(title, color=TEXT, fontsize=9, pad=7,
+                     fontfamily="monospace", fontweight="bold")
     if xlabel:
         ax.set_xlabel(xlabel, color=DIM, fontsize=8)
     if ylabel:
@@ -48,22 +40,13 @@ def _style(ax, title="", xlabel="", ylabel=""):
 def _smooth(arr, k=10):
     if len(arr) <= k:
         return arr
-    return np.convolve(arr, np.ones(k) / k, "valid")
+    return np.convolve(arr, np.ones(k)/k, "valid")
 
 
 def training_dashboard(state) -> Figure:
     fig = plt.figure(figsize=(13, 8), facecolor=BG)
-    gs = gridspec.GridSpec(
-        2,
-        2,
-        figure=fig,
-        hspace=0.52,
-        wspace=0.32,
-        left=0.08,
-        right=0.97,
-        top=0.88,
-        bottom=0.08,
-    )
+    gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.52, wspace=0.32,
+                           left=0.08, right=0.97, top=0.88, bottom=0.08)
 
     eps = list(range(len(state.mean_rewards)))
 
@@ -74,14 +57,8 @@ def training_dashboard(state) -> Figure:
         ax1.plot(eps, state.mean_rewards, color=C_REWARD, alpha=0.25, linewidth=0.8)
         sm = _smooth(state.mean_rewards)
         ax1.plot(range(len(sm)), sm, color=C_REWARD, linewidth=2.2, label="Smoothed")
-        ax1.axhline(
-            state.rolling_mean,
-            color=C_REWARD,
-            linewidth=1,
-            linestyle="--",
-            alpha=0.5,
-            label=f"Rolling: {state.rolling_mean:+.2f}",
-        )
+        ax1.axhline(state.rolling_mean, color=C_REWARD, linewidth=1,
+                    linestyle="--", alpha=0.5, label=f"Rolling: {state.rolling_mean:+.2f}")
         ax1.legend(facecolor=BG2, edgecolor=GRID, labelcolor=TEXT, fontsize=8)
 
     # Deliveries
@@ -108,11 +85,7 @@ def training_dashboard(state) -> Figure:
     fig.suptitle(
         f"WAREHOUSE IPPO TRAINING  ·  {n} episodes  ·  "
         f"Avg deliveries: {avg_d:.1f}/ep  ·  Avg collisions: {avg_c:.1f}/ep",
-        color=TEXT,
-        fontsize=10,
-        fontfamily="monospace",
-        fontweight="bold",
-        y=0.95,
+        color=TEXT, fontsize=10, fontfamily="monospace", fontweight="bold", y=0.95,
     )
     return fig
 
@@ -123,64 +96,39 @@ def comparison_chart(results: dict[str, dict]) -> Figure:
     fig.patch.set_facecolor(BG)
 
     strategies = list(results.keys())
-    s_colors = {
-        "IPPO (trained)": C_TRAINED,
-        "Random": C_RANDOM,
-        "Greedy": "#8b5cf6",
-        "No-op": "#4a5568",
-    }
+    s_colors = {"IPPO (trained)": C_TRAINED, "Random": C_RANDOM,
+                "Greedy": "#8b5cf6", "No-op": "#4a5568"}
 
     metrics = [
         ("deliveries", "Deliveries", C_DELIVERY),
         ("collisions", "Collisions", C_COLLISION),
-        ("reward", "Team Reward", C_REWARD),
+        ("reward",     "Team Reward", C_REWARD),
     ]
     for ax, (key, label, _) in zip(axes, metrics):
         _style(ax, label.upper())
-        vals = [results[s].get(key, 0) for s in strategies]
-        cols = [s_colors.get(s, TEXT) for s in strategies]
-        bars = ax.bar(
-            strategies, vals, color=cols, edgecolor=BG, linewidth=0.8, width=0.5
-        )
+        vals  = [results[s].get(key, 0) for s in strategies]
+        cols  = [s_colors.get(s, TEXT) for s in strategies]
+        bars  = ax.bar(strategies, vals, color=cols, edgecolor=BG, linewidth=0.8, width=0.5)
         for bar, val in zip(bars, vals):
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + abs(min(vals + [0])) * 0.03,
-                f"{val:.1f}",
-                ha="center",
-                va="bottom",
-                color=TEXT,
-                fontsize=9,
-                fontweight="bold",
-            )
+            ax.text(bar.get_x() + bar.get_width()/2,
+                    bar.get_height() + abs(min(vals + [0])) * 0.03,
+                    f"{val:.1f}",
+                    ha="center", va="bottom", color=TEXT, fontsize=9, fontweight="bold")
         ax.axhline(0, color=GRID, linewidth=0.8)
         ax.tick_params(axis="x", colors=TEXT, labelsize=8)
 
-    fig.suptitle(
-        "STRATEGY COMPARISON  ·  Same Warehouse, 100 Steps",
-        color=TEXT,
-        fontsize=11,
-        fontfamily="monospace",
-        fontweight="bold",
-    )
+    fig.suptitle("STRATEGY COMPARISON  ·  Same Warehouse, 100 Steps",
+                 color=TEXT, fontsize=11, fontfamily="monospace",
+                 fontweight="bold")
     fig.tight_layout(pad=2)
     return fig
 
 
 def empty_fig(msg: str = "") -> Figure:
     fig, ax = plt.subplots(figsize=(10, 4), facecolor=BG)
-    fig.patch.set_facecolor(BG)
-    ax.set_facecolor(BG2)
-    ax.text(
-        0.5,
-        0.5,
-        msg,
-        transform=ax.transAxes,
-        ha="center",
-        va="center",
-        color=DIM,
-        fontsize=12,
-        fontfamily="monospace",
-    )
+    fig.patch.set_facecolor(BG); ax.set_facecolor(BG2)
+    ax.text(0.5, 0.5, msg, transform=ax.transAxes,
+            ha="center", va="center", color=DIM,
+            fontsize=12, fontfamily="monospace")
     ax.axis("off")
     return fig

@@ -295,13 +295,7 @@ export default withMermaid(
     mermaid: { theme: "neutral" },
 
     sitemap: {
-    hostname: "https://dash10107.github.io",
-    transformItems: (items) => {
-      return items.map(item => ({
-        ...item,
-        url: 'reinforcement-learning-lab/' + item.url
-      }))
-    }
-  },
+      hostname: siteUrl,
+    },
   })
 );

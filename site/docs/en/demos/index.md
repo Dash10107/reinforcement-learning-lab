@@ -107,4 +107,4 @@ The demos are most useful if you know what to watch. Here's a guide for each:
 
 ## Can't access a demo?
 
-The demos run on Hugging Face Spaces. If a Space is sleeping (cold start), it may take 30–60 seconds to wake up on first load. If it's been idle for several days, it may need to be restarted — open an issue on [GitHub](https://github.com/Dash10107/rl-portfolio) and it'll be back up within a day.
+The demos run on Hugging Face Spaces. If a Space is sleeping (cold start), it may take 30–60 seconds to wake up on first load. If it's been idle for several days, it may need to be restarted — open an issue on [GitHub](https://github.com/Dash10107/reinforcement-learning-lab) and it'll be back up within a day.

@@ -3,15 +3,13 @@ SAC training pipeline — fine-tune or train from scratch with live callbacks.
 """
 
 from __future__ import annotations
-
 import os
 import threading
 from dataclasses import dataclass, field
-
-import gymnasium as gym
-import numpy as np
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
+import gymnasium as gym
+import numpy as np
 
 
 @dataclass
@@ -48,7 +46,8 @@ class _LiveCallback(BaseCallback):
                 r = float(info["episode"]["r"])
                 self._ep_rewards.append(r)
                 self._state.episode_rewards.append(r)
-                self._state.best_reward = max(self._state.best_reward, r)
+                if r > self._state.best_reward:
+                    self._state.best_reward = r
 
         if self.num_timesteps % self._log_interval == 0:
             losses = self.model.logger.name_to_value
@@ -61,7 +60,7 @@ class _LiveCallback(BaseCallback):
         rolling = float(np.mean(self._ep_rewards[-20:])) if self._ep_rewards else 0.0
         self._state.status = (
             f"Step {self.num_timesteps:,}/{self._state.total_timesteps:,} "
-            f"({pct * 100:.1f}%)  |  Rolling reward: {rolling:+.1f}  |  "
+            f"({pct*100:.1f}%)  |  Rolling reward: {rolling:+.1f}  |  "
             f"Best: {self._state.best_reward:+.1f}"
         )
         return True
@@ -99,8 +98,7 @@ def start_training(
             model.batch_size = batch_size
         else:
             model = SAC(
-                "MlpPolicy",
-                env,
+                "MlpPolicy", env,
                 learning_rate=learning_rate,
                 batch_size=batch_size,
                 verbose=0,

@@ -9,30 +9,21 @@ Compares three strategies on the same grid scenario:
 """
 
 from __future__ import annotations
-
 import os
-
-import gradio as gr
 import numpy as np
-from agents.dp_solver import rollout_dp, solve_dp
-from agents.dqn_agent import TrainingState, rollout_dqn, start_training
-from agents.naive import rollout_naive, rollout_no_battery
+import gradio as gr
+
 from env.grid_env import SmartGridEnv
 from env.scenarios import (
-    BASE_PRICES,
-    LOAD_PROFILES,
-    SCENARIO_PRESETS,
-    SOLAR_PROFILE,
-    add_price_noise,
-    add_solar_noise,
-    get_scenario,
+    BASE_PRICES, SOLAR_PROFILE, LOAD_PROFILES,
+    SCENARIO_PRESETS, get_scenario, add_price_noise, add_solar_noise,
 )
+from agents.dp_solver import solve_dp, rollout_dp
+from agents.naive import rollout_naive, rollout_no_battery
+from agents.dqn_agent import TrainingState, start_training, rollout_dqn
 from viz.dashboard import (
-    _empty_fig,
-    comparison_chart,
-    dispatch_dashboard,
-    scenario_price_chart,
-    training_chart,
+    dispatch_dashboard, comparison_chart,
+    training_chart, scenario_price_chart, _empty_fig,
 )
 
 DQN_PATH = "dqn_smartgrid.zip"
@@ -41,7 +32,6 @@ _last_scenario: dict = {}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-
 
 def _make_env(scenario: dict, stochastic: bool = False) -> SmartGridEnv:
     return SmartGridEnv(
@@ -63,74 +53,60 @@ def _run_all_strategies(scenario: dict) -> dict:
     # DP Optimal
     env_dp = _make_env(scenario)
     env_dp._prices = scenario["prices"]
-    env_dp._solar = scenario["solar"]
-    env_dp._load = scenario["load"]
+    env_dp._solar  = scenario["solar"]
+    env_dp._load   = scenario["load"]
     policy, _, soc_grid = solve_dp(env_dp)
     rollout_dp(env_dp, policy, soc_grid)
-    results["DP Optimal"] = {
-        "log": {k: list(v) for k, v in env_dp.log.items()},
-        "reward": env_dp.total_reward,
-    }
+    results["DP Optimal"] = {"log": {k: list(v) for k, v in env_dp.log.items()},
+                              "reward": env_dp.total_reward}
 
     # Rule-Based
     env_nb = _make_env(scenario)
     env_nb._prices = scenario["prices"]
-    env_nb._solar = scenario["solar"]
-    env_nb._load = scenario["load"]
+    env_nb._solar  = scenario["solar"]
+    env_nb._load   = scenario["load"]
     rollout_naive(env_nb)
-    results["Rule-Based"] = {
-        "log": {k: list(v) for k, v in env_nb.log.items()},
-        "reward": env_nb.total_reward,
-    }
+    results["Rule-Based"] = {"log": {k: list(v) for k, v in env_nb.log.items()},
+                              "reward": env_nb.total_reward}
 
     # No Storage
     env_ns = _make_env(scenario)
     env_ns._prices = scenario["prices"]
-    env_ns._solar = scenario["solar"]
-    env_ns._load = scenario["load"]
+    env_ns._solar  = scenario["solar"]
+    env_ns._load   = scenario["load"]
     rollout_no_battery(env_ns)
-    results["No Storage"] = {
-        "log": {k: list(v) for k, v in env_ns.log.items()},
-        "reward": env_ns.total_reward,
-    }
+    results["No Storage"] = {"log": {k: list(v) for k, v in env_ns.log.items()},
+                              "reward": env_ns.total_reward}
 
     # DQN (if available)
     if os.path.exists(DQN_PATH) or os.path.exists(DQN_PATH + ".zip"):
         env_dqn = _make_env(scenario, stochastic=False)
         env_dqn._prices = scenario["prices"]
-        env_dqn._solar = scenario["solar"]
-        env_dqn._load = scenario["load"]
+        env_dqn._solar  = scenario["solar"]
+        env_dqn._load   = scenario["load"]
         r = rollout_dqn(env_dqn, DQN_PATH)
         if r is not None:
-            results["DQN Agent"] = {
-                "log": {k: list(v) for k, v in env_dqn.log.items()},
-                "reward": r,
-            }
+            results["DQN Agent"] = {"log": {k: list(v) for k, v in env_dqn.log.items()},
+                                    "reward": r}
 
     return results
 
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
 
-
 def cb_load_scenario(scenario_name: str):
     global _last_scenario
     _last_scenario = get_scenario(scenario_name)
     fig = scenario_price_chart(
-        _last_scenario["prices"],
-        _last_scenario["solar"],
-        _last_scenario["load"],
-        scenario_name,
+        _last_scenario["prices"], _last_scenario["solar"],
+        _last_scenario["load"], scenario_name,
     )
     return fig, f"Scenario **{scenario_name}** loaded."
 
 
-def cb_run_dispatch(
-    scenario_name: str, strategy: str, progress: gr.Progress | None = None
-):
+def cb_run_dispatch(scenario_name: str, strategy: str,
+                    progress: gr.Progress = gr.Progress()):
     global _last_scenario
-    if progress is None:
-        progress = gr.Progress()
     progress(0.1, desc="Loading scenario…")
     _last_scenario = get_scenario(scenario_name)
     sc = _last_scenario
@@ -138,8 +114,8 @@ def cb_run_dispatch(
     progress(0.3, desc=f"Running {strategy}…")
     env = _make_env(sc)
     env._prices = sc["prices"]
-    env._solar = sc["solar"]
-    env._load = sc["load"]
+    env._solar  = sc["solar"]
+    env._load   = sc["load"]
 
     if strategy == "DP Optimal":
         policy, _, soc_grid = solve_dp(env)
@@ -147,9 +123,8 @@ def cb_run_dispatch(
     elif strategy == "DQN Agent":
         r = rollout_dqn(env, DQN_PATH)
         if r is None:
-            return _empty_fig(
-                "Train the DQN agent first in the Training tab."
-            ), "*No DQN model found — train first.*"
+            return _empty_fig("Train the DQN agent first in the Training tab."), \
+                   "*No DQN model found — train first.*"
     elif strategy == "Rule-Based":
         rollout_naive(env)
     else:
@@ -158,8 +133,7 @@ def cb_run_dispatch(
     progress(0.8, desc="Rendering dashboard…")
     fig = dispatch_dashboard(
         {k: list(v) for k, v in env.log.items()},
-        scenario_name=scenario_name,
-        strategy=strategy,
+        scenario_name=scenario_name, strategy=strategy,
     )
     total_r = env.total_reward
     solar_total = sum(env.log["solar"])
@@ -180,7 +154,7 @@ def cb_run_dispatch(
     return fig, status
 
 
-def cb_benchmark(scenario_name: str, progress: gr.Progress = gr.Progress()):  # noqa: B008
+def cb_benchmark(scenario_name: str, progress: gr.Progress = gr.Progress()):
     global _last_scenario
     progress(0.1, desc="Preparing scenario…")
     _last_scenario = get_scenario(scenario_name)
@@ -191,7 +165,7 @@ def cb_benchmark(scenario_name: str, progress: gr.Progress = gr.Progress()):  # 
 
     rows = "\n".join(
         f"| {name} | `${data['reward']:+.4f}` | "
-        f"`{'↑ upper bound' if name == 'DP Optimal' else ('✅ trained RL' if name == 'DQN Agent' else '')}` |"
+        f"`{'↑ upper bound' if name=='DP Optimal' else ('✅ trained RL' if name=='DQN Agent' else '')}` |"
         for name, data in results.items()
     )
     summary = f"""
@@ -247,12 +221,8 @@ def cb_refresh_training():
 
 
 def cb_custom_scenario(
-    price_profile: str,
-    solar_cap: float,
-    load_profile: str,
-    battery_cap: float,
-    max_rate: float,
-    efficiency: float,
+    price_profile: str, solar_cap: float, load_profile: str,
+    battery_cap: float, max_rate: float, efficiency: float,
     add_noise: bool,
 ):
     global _last_scenario
@@ -266,15 +236,10 @@ def cb_custom_scenario(
         solar = add_solar_noise(solar, rng=rng)
 
     _last_scenario = {
-        "prices": prices,
-        "solar": solar,
-        "load": load,
-        "solar_cap": solar_cap,
-        "battery_cap": battery_cap,
-        "max_rate": max_rate,
-        "efficiency": efficiency,
-        "load_profile": load_profile,
-        "price_profile": price_profile,
+        "prices": prices, "solar": solar, "load": load,
+        "solar_cap": solar_cap, "battery_cap": battery_cap,
+        "max_rate": max_rate, "efficiency": efficiency,
+        "load_profile": load_profile, "price_profile": price_profile,
     }
 
     fig = scenario_price_chart(prices, solar, load, "Custom Scenario")
@@ -413,6 +378,7 @@ PRICE_PROFILES = list(BASE_PRICES.keys())
 LOAD_PROFILES_LIST = list(LOAD_PROFILES.keys())
 
 with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
+
     gr.HTML("""
     <div class="sg-header">
         <div class="sg-title">⚡ SMART GRID ENERGY OPTIMIZER</div>
@@ -429,6 +395,7 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
     """)
 
     with gr.Tabs():
+
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Dispatch Dashboard
         # ══════════════════════════════════════════════════════════════════
@@ -457,7 +424,7 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
                         STRATEGY_CHOICES,
                         value="DP Optimal",
                         label="Control Strategy",
-                        info="DQN requires a trained model (see Training tab)",
+                        info="DQN requires a trained model (see Training tab)"
                     )
                     btn_dispatch = gr.Button("▶ RUN DISPATCH", variant="primary")
 
@@ -478,9 +445,7 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
                     """)
 
                 with gr.Column(scale=2):
-                    disp_status = gr.Markdown(
-                        "*Select scenario and strategy, then click Run Dispatch.*"
-                    )
+                    disp_status = gr.Markdown("*Select scenario and strategy, then click Run Dispatch.*")
 
             disp_fig = gr.Plot(label="Dispatch Dashboard")
 
@@ -516,9 +481,7 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
                 btn_bench = gr.Button("🏆 RUN BENCHMARK", variant="primary")
 
             bench_fig = gr.Plot(label="Benchmark Comparison")
-            bench_summary = gr.Markdown(
-                "*Click Run Benchmark to compare all strategies.*"
-            )
+            bench_summary = gr.Markdown("*Click Run Benchmark to compare all strategies.*")
 
             btn_bench.click(
                 cb_benchmark,
@@ -552,37 +515,26 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
                         label="Training Scenario",
                     )
                     train_steps = gr.Slider(
-                        5_000,
-                        200_000,
-                        value=30_000,
-                        step=5_000,
+                        5_000, 200_000, value=30_000, step=5_000,
                         label="Training Timesteps",
                         info="~30k = fast (~30s) · ~100k = better policy · ~200k = near-optimal",
                     )
                     train_lr = gr.Slider(
-                        1e-5,
-                        1e-3,
-                        value=5e-4,
-                        step=1e-5,
+                        1e-5, 1e-3, value=5e-4, step=1e-5,
                         label="Learning Rate",
                     )
                     train_batch = gr.Slider(
-                        32,
-                        256,
-                        value=64,
-                        step=32,
+                        32, 256, value=64, step=32,
                         label="Batch Size",
                     )
                     with gr.Row():
                         btn_train = gr.Button("▶ START TRAINING", variant="primary")
-                        btn_stop = gr.Button("⏹ STOP", variant="stop")
+                        btn_stop  = gr.Button("⏹ STOP", variant="stop")
                     btn_refresh = gr.Button("🔄 REFRESH METRICS", variant="secondary")
                     train_msg = gr.Textbox(label="Status", lines=2, interactive=False)
 
                 with gr.Column(scale=2):
-                    train_status_md = gr.Markdown(
-                        "*Start training to see live metrics.*"
-                    )
+                    train_status_md = gr.Markdown("*Start training to see live metrics.*")
                     train_fig = gr.Plot(label="Training Dashboard")
 
             btn_train.click(
@@ -639,28 +591,20 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1):
-                    lab_price = gr.Dropdown(
-                        PRICE_PROFILES, value="summer_peak", label="Price Profile"
-                    )
-                    lab_load = gr.Dropdown(
-                        LOAD_PROFILES_LIST, value="commercial", label="Building Type"
-                    )
-                    lab_solar = gr.Slider(
-                        0, 10, value=5.0, step=0.5, label="Solar Capacity (kW)"
-                    )
-                    lab_batcap = gr.Slider(
-                        2, 50, value=10.0, step=1, label="Battery Capacity (kWh)"
-                    )
-                    lab_rate = gr.Slider(
-                        1, 6, value=3.0, step=0.5, label="Max Charge Rate (kW)"
-                    )
-                    lab_eff = gr.Slider(
-                        0.7, 0.99, value=0.92, step=0.01, label="Round-Trip Efficiency"
-                    )
-                    lab_noise = gr.Checkbox(
-                        label="Add price & solar uncertainty", value=False
-                    )
-                    btn_lab = gr.Button("🔬 PREVIEW SCENARIO", variant="primary")
+                    lab_price  = gr.Dropdown(PRICE_PROFILES, value="summer_peak",
+                                              label="Price Profile")
+                    lab_load   = gr.Dropdown(LOAD_PROFILES_LIST, value="commercial",
+                                              label="Building Type")
+                    lab_solar  = gr.Slider(0, 10, value=5.0, step=0.5,
+                                           label="Solar Capacity (kW)")
+                    lab_batcap = gr.Slider(2, 50, value=10.0, step=1,
+                                           label="Battery Capacity (kWh)")
+                    lab_rate   = gr.Slider(1, 6, value=3.0, step=0.5,
+                                           label="Max Charge Rate (kW)")
+                    lab_eff    = gr.Slider(0.7, 0.99, value=0.92, step=0.01,
+                                           label="Round-Trip Efficiency")
+                    lab_noise  = gr.Checkbox(label="Add price & solar uncertainty", value=False)
+                    btn_lab    = gr.Button("🔬 PREVIEW SCENARIO", variant="primary")
                     lab_status = gr.Markdown("")
 
                 with gr.Column(scale=2):
@@ -668,15 +612,8 @@ with gr.Blocks(title="Smart Grid Energy Optimizer") as demo:
 
             btn_lab.click(
                 cb_custom_scenario,
-                inputs=[
-                    lab_price,
-                    lab_solar,
-                    lab_load,
-                    lab_batcap,
-                    lab_rate,
-                    lab_eff,
-                    lab_noise,
-                ],
+                inputs=[lab_price, lab_solar, lab_load, lab_batcap,
+                        lab_rate, lab_eff, lab_noise],
                 outputs=[lab_fig, lab_status],
             )
 

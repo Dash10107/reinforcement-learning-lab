@@ -3,9 +3,8 @@ Rule-based baselines for comparison with RL.
 """
 
 from __future__ import annotations
-
 import numpy as np
-from env.grid_env import SmartGridEnv
+from env.grid_env import SmartGridEnv, ACTION_TO_KW
 
 
 def rollout_naive(env: SmartGridEnv, threshold_pct: float = 0.5) -> float:
@@ -20,7 +19,7 @@ def rollout_naive(env: SmartGridEnv, threshold_pct: float = 0.5) -> float:
     low_thresh = median_p * (1 - threshold_pct * 0.5)
     high_thresh = median_p * (1 + threshold_pct * 0.5)
 
-    obs, _ = env.reset()  # noqa: RUF059
+    obs, _ = env.reset()
     env.soc = 0.0
     env.hour = 0
     env.log = env._empty_log()
@@ -41,7 +40,7 @@ def rollout_naive(env: SmartGridEnv, threshold_pct: float = 0.5) -> float:
 
 def rollout_no_battery(env: SmartGridEnv) -> float:
     """Pure grid + solar (no battery storage) — shows value of storage."""
-    obs, _ = env.reset()  # noqa: RUF059
+    obs, _ = env.reset()
     env.soc = 0.0
     env.hour = 0
     env.log = env._empty_log()

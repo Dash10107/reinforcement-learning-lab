@@ -79,3 +79,11 @@ datasets/
 
 # GIF replays generated at runtime
 *.gif
+
+# Reference repos (local study only)
+.reference/
+
+# VitePress site
+site/node_modules/
+site/docs/.vitepress/dist/
+site/docs/.vitepress/cache/

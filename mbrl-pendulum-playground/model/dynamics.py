@@ -7,13 +7,13 @@ EnsembleDynamics  — 5-model ensemble: (s, a) → (mean_s', std_s')
 """
 
 from __future__ import annotations
-
 import numpy as np
 import torch
-from torch import nn
+import torch.nn as nn
 
-STATE_DIM = 3  # [cos_theta, sin_theta, angular_vel]
-ACTION_DIM = 1  # [torque]
+
+STATE_DIM  = 3   # [cos_theta, sin_theta, angular_vel]
+ACTION_DIM = 1   # [torque]
 STATE_NAMES = ["cos θ", "sin θ", "θ̇ (ang. vel)"]
 
 
@@ -23,12 +23,9 @@ class DynamicsModel(nn.Module):
     def __init__(self, hidden: int = 128):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(STATE_DIM + ACTION_DIM, hidden),
-            nn.SiLU(),
-            nn.Linear(hidden, hidden),
-            nn.SiLU(),
-            nn.Linear(hidden, hidden // 2),
-            nn.SiLU(),
+            nn.Linear(STATE_DIM + ACTION_DIM, hidden), nn.SiLU(),
+            nn.Linear(hidden, hidden), nn.SiLU(),
+            nn.Linear(hidden, hidden // 2), nn.SiLU(),
             nn.Linear(hidden // 2, STATE_DIM),
         )
         self._init_weights()
@@ -110,17 +107,13 @@ def load_pretrained(path: str = "dynamics_model.pth") -> DynamicsModel:
             def __init__(self):
                 super().__init__()
                 self.net = nn.Sequential(
-                    nn.Linear(STATE_DIM + ACTION_DIM, 64),
-                    nn.ReLU(),
-                    nn.Linear(64, 64),
-                    nn.ReLU(),
+                    nn.Linear(STATE_DIM + ACTION_DIM, 64), nn.ReLU(),
+                    nn.Linear(64, 64), nn.ReLU(),
                     nn.Linear(64, STATE_DIM),
                 )
-
             def forward(self, state, action):
                 x = torch.cat([state, action], dim=-1)
                 return self.net(x)
-
             def predict_np(self, state, action):
                 with torch.no_grad():
                     s = torch.FloatTensor(state).unsqueeze(0)
@@ -144,7 +137,7 @@ def pendulum_reward_batch(states: torch.Tensor, actions: torch.Tensor) -> torch.
     states : (B, 3) — [cos_th, sin_th, ang_vel]
     actions: (B, 1) — torque ∈ [-2, 2]
     """
-    theta = torch.atan2(states[:, 1], states[:, 0])  # recover angle
+    theta = torch.atan2(states[:, 1], states[:, 0])   # recover angle
     ang_vel = states[:, 2]
     torque = actions[:, 0].clamp(-2, 2)
     return -(theta.pow(2) + 0.1 * ang_vel.pow(2) + 0.001 * torque.pow(2))

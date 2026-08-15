@@ -131,10 +131,9 @@ import gymnasium as gym
 import torch
 
 # 1. Create environment and agent
-env = gym.make("YourEnv-v0")
-agent = YourAgent(
-    state_dim=env.observation_space.shape[0], action_dim=env.action_space.n
-)
+env   = gym.make("YourEnv-v0")
+agent = YourAgent(state_dim=env.observation_space.shape[0],
+                  action_dim=env.action_space.n)
 
 # 2. Training loop
 for episode in range(10_000):
@@ -214,7 +213,6 @@ Use `gymnasium.Env` as your base class:
 import gymnasium as gym
 import numpy as np
 
-
 class MyEnv(gym.Env):
     def __init__(self):
         self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(4,))
@@ -227,9 +225,9 @@ class MyEnv(gym.Env):
     def step(self, action):
         # Your environment logic here
         next_state = self.state  # update based on action
-        reward = 0.0  # compute reward
-        terminated = False  # True if success/failure
-        truncated = False  # True if time limit reached
+        reward = 0.0             # compute reward
+        terminated = False       # True if success/failure
+        truncated = False        # True if time limit reached
         return next_state, reward, terminated, truncated, {}
 ```
 

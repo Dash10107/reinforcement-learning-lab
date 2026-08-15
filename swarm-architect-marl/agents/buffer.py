@@ -1,7 +1,6 @@
-from dataclasses import dataclass, field
-
 import numpy as np
 import torch
+from dataclasses import dataclass, field
 
 
 @dataclass

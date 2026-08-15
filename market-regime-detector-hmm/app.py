@@ -6,40 +6,28 @@ backtesting, and multi-asset comparison.
 """
 
 from __future__ import annotations
-
 import warnings
-
 warnings.filterwarnings("ignore")
 
 from datetime import date
-
-import gradio as gr
+import numpy as np
 import pandas as pd
+import gradio as gr
+
 from core.data import (
-    build_features,
-    fetch_ohlcv,
-    label_regimes,
-    regime_statistics,
-    transition_matrix,
+    fetch_ohlcv, build_features, label_regimes,
+    regime_statistics, transition_matrix,
 )
 from core.hmm_model import (
-    current_regime_probs,
-    fit_hmm,
-    model_diagnostics,
-    select_n_regimes,
+    fit_hmm, select_n_regimes, current_regime_probs, model_diagnostics,
 )
 from core.strategy import backtest_regime_strategy, strategy_metrics
 from viz.charts import (
-    backtest_chart,
-    empty_fig,
-    multi_asset_chart,
-    regime_analytics,
-    regime_gauge,
-    regime_price_chart,
+    regime_price_chart, regime_analytics, backtest_chart,
+    multi_asset_chart, regime_gauge, empty_fig,
 )
 
 # ── Shared pipeline ───────────────────────────────────────────────────────────
-
 
 def _run_pipeline(
     ticker: str,
@@ -52,12 +40,12 @@ def _run_pipeline(
     Download → features → HMM → labelling.
     Returns (feat_with_labels, diagnostics, bic_scores, label_map)
     """
-    raw = fetch_ohlcv(ticker, start, end)
+    raw  = fetch_ohlcv(ticker, start, end)
     feat = build_features(raw)
 
     if len(feat) < n_regimes * 15:
         raise ValueError(
-            f"Only {len(feat)} data points — need at least {n_regimes * 15} "
+            f"Only {len(feat)} data points — need at least {n_regimes*15} "
             f"for {n_regimes} regimes. Widen the date range."
         )
 
@@ -73,9 +61,9 @@ def _run_pipeline(
     diag = model_diagnostics(model, scaler, feat, n_regimes)
 
     # Attach current regime probs to feat for later use
-    feat._hmm_model = model
+    feat._hmm_model  = model
     feat._hmm_scaler = scaler
-    feat._label_map = label_map
+    feat._label_map  = label_map
 
     return feat, diag, bic_scores, label_map
 
@@ -91,27 +79,23 @@ def _parse_dates(start_val, end_val) -> tuple[str, str]:
 
     s = _fmt(start_val)
     e = _fmt(end_val)
-    e = min(e, date.today().isoformat())  # noqa: DTZ011
+    if e > date.today().isoformat():
+        e = date.today().isoformat()
     return s, e
 
 
 # ── Tab callbacks ─────────────────────────────────────────────────────────────
 
-
 def cb_regime_detection(
-    ticker,
-    start_val,
-    end_val,
-    n_regimes,
-    auto_select,
-    progress: gr.Progress = gr.Progress(),  # noqa: B008
+    ticker, start_val, end_val, n_regimes, auto_select,
+    progress: gr.Progress = gr.Progress(),
 ):
     try:
         ticker = ticker.strip().upper()
         start, end = _parse_dates(start_val, end_val)
         progress(0.15, desc="Downloading market data…")
 
-        feat, diag, bic_scores, label_map = _run_pipeline(  # noqa: RUF059
+        feat, diag, bic_scores, label_map = _run_pipeline(
             ticker, start, end, int(n_regimes), bool(auto_select)
         )
         progress(0.60, desc="Rendering regime chart…")
@@ -119,14 +103,14 @@ def cb_regime_detection(
         price_fig = regime_price_chart(feat, ticker)
 
         progress(0.80, desc="Computing current regime…")
-        model = feat._hmm_model
+        model  = feat._hmm_model
         scaler = feat._hmm_scaler
-        probs = current_regime_probs(model, scaler, feat)
-        gauge = regime_gauge(probs, label_map)
+        probs  = current_regime_probs(model, scaler, feat)
+        gauge  = regime_gauge(probs, label_map)
 
         # Current regime
         current = feat["regime_label"].iloc[-1]
-        current_col = feat["regime_color"].iloc[-1]  # noqa: F841
+        current_col = feat["regime_color"].iloc[-1]
 
         # Build stats table markdown
         stats_df = regime_statistics(feat)
@@ -138,28 +122,24 @@ def cb_regime_detection(
         status_md = f"""
 ### Analysis Complete — {ticker}  `{start}` → `{end}`
 
-**Current Regime:** {current}  ·  **Data Points:** {len(feat)}  ·  **Regimes:** {int(n_regimes) if not auto_select else diag["n_states"]}
+**Current Regime:** {current}  ·  **Data Points:** {len(feat)}  ·  **Regimes:** {int(n_regimes) if not auto_select else diag['n_states']}
 
 | Regime | Ann. Return | Ann. Vol | Sharpe | Max DD | % Time | Avg Duration |
 |---|---|---|---|---|---|---|
 {rows}
 
-> **Model:** Log-likelihood `{diag["log_likelihood"]}` · AIC `{diag["aic"]}` · BIC `{diag["bic"]}` · Converged: `{diag["converged"]}`
+> **Model:** Log-likelihood `{diag['log_likelihood']}` · AIC `{diag['aic']}` · BIC `{diag['bic']}` · Converged: `{diag['converged']}`
 """
         progress(1.0)
         return price_fig, gauge, status_md
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return empty_fig(f"Error: {e}"), empty_fig(""), f"❌ **Error:** {e}"
 
 
 def cb_analytics(
-    ticker,
-    start_val,
-    end_val,
-    n_regimes,
-    auto_select,
-    progress: gr.Progress = gr.Progress(),  # noqa: B008
+    ticker, start_val, end_val, n_regimes, auto_select,
+    progress: gr.Progress = gr.Progress(),
 ):
     try:
         ticker = ticker.strip().upper()
@@ -177,39 +157,32 @@ def cb_analytics(
         fig = regime_analytics(feat, stats_df, trans_df, diag, bic_scores)
 
         progress(1.0)
-        return (
-            fig,
-            f"Analytics computed for **{ticker}** — {len(feat)} observations, {n} regimes.",
-        )
+        return fig, f"Analytics computed for **{ticker}** — {len(feat)} observations, {n} regimes."
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return empty_fig(f"Error: {e}"), f"❌ **Error:** {e}"
 
 
 def cb_backtest(
-    ticker,
-    start_val,
-    end_val,
-    n_regimes,
-    auto_select,
-    progress: gr.Progress = gr.Progress(),  # noqa: B008
+    ticker, start_val, end_val, n_regimes, auto_select,
+    progress: gr.Progress = gr.Progress(),
 ):
     try:
         ticker = ticker.strip().upper()
         start, end = _parse_dates(start_val, end_val)
         progress(0.1, desc="Fitting model…")
 
-        feat, diag, _, label_map = _run_pipeline(  # noqa: RUF059
+        feat, diag, _, label_map = _run_pipeline(
             ticker, start, end, int(n_regimes), bool(auto_select)
         )
         progress(0.5, desc="Running backtest…")
 
-        bt = backtest_regime_strategy(feat)
+        bt      = backtest_regime_strategy(feat)
         metrics = strategy_metrics(bt)
-        fig = backtest_chart(bt, metrics, ticker)
+        fig     = backtest_chart(bt, metrics, ticker)
 
         strat_m = metrics["Strategy"]
-        bnh_m = metrics["Buy & Hold"]
+        bnh_m   = metrics["Buy & Hold"]
         summary = f"""
 ### Backtest Results — {ticker}
 
@@ -217,12 +190,12 @@ def cb_backtest(
 
 | Metric | Regime Strategy | Buy & Hold |
 |---|---|---|
-| **Total Return** | `{strat_m["Total Return"]}` | `{bnh_m["Total Return"]}` |
-| **Ann. Return** | `{strat_m["Ann. Return"]}` | `{bnh_m["Ann. Return"]}` |
-| **Ann. Volatility** | `{strat_m["Ann. Volatility"]}` | `{bnh_m["Ann. Volatility"]}` |
-| **Sharpe Ratio** | `{strat_m["Sharpe Ratio"]}` | `{bnh_m["Sharpe Ratio"]}` |
-| **Max Drawdown** | `{strat_m["Max Drawdown"]}` | `{bnh_m["Max Drawdown"]}` |
-| **Calmar Ratio** | `{strat_m["Calmar Ratio"]}` | `{bnh_m["Calmar Ratio"]}` |
+| **Total Return** | `{strat_m['Total Return']}` | `{bnh_m['Total Return']}` |
+| **Ann. Return** | `{strat_m['Ann. Return']}` | `{bnh_m['Ann. Return']}` |
+| **Ann. Volatility** | `{strat_m['Ann. Volatility']}` | `{bnh_m['Ann. Volatility']}` |
+| **Sharpe Ratio** | `{strat_m['Sharpe Ratio']}` | `{bnh_m['Sharpe Ratio']}` |
+| **Max Drawdown** | `{strat_m['Max Drawdown']}` | `{bnh_m['Max Drawdown']}` |
+| **Calmar Ratio** | `{strat_m['Calmar Ratio']}` | `{bnh_m['Calmar Ratio']}` |
 
 > **Note:** All signals lagged by 1 day (no look-ahead bias).
 > Transaction cost: 10bps per allocation change.
@@ -230,16 +203,13 @@ def cb_backtest(
         progress(1.0)
         return fig, summary
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return empty_fig(f"Error: {e}"), f"❌ **Error:** {e}"
 
 
 def cb_multi_asset(
-    tickers_str,
-    start_val,
-    end_val,
-    n_regimes,
-    progress: gr.Progress = gr.Progress(),  # noqa: B008
+    tickers_str, start_val, end_val, n_regimes,
+    progress: gr.Progress = gr.Progress(),
 ):
     try:
         tickers = [t.strip().upper() for t in tickers_str.split(",") if t.strip()][:6]
@@ -250,7 +220,7 @@ def cb_multi_asset(
             try:
                 feat, _, _, _ = _run_pipeline(t, start, end, int(n_regimes))
                 results[t] = feat
-            except Exception:  # noqa: BLE001, S110
+            except Exception as e:
                 pass  # skip failed tickers silently
 
         if not results:
@@ -261,7 +231,7 @@ def cb_multi_asset(
         progress(1.0)
         return fig, f"Regime sync chart for: **{ok_tickers}**"
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return empty_fig(f"Error: {e}"), f"❌ **Error:** {e}"
 
 
@@ -361,27 +331,21 @@ footer { display:none !important; }
 
 # ── Shared input panel ────────────────────────────────────────────────────────
 
-
 def _input_panel(default_ticker="SPY", key_suffix=""):
-    ticker = gr.Textbox(
-        value=default_ticker,
-        label="Ticker Symbol",
-        info="e.g. SPY, AAPL, ^GSPC, MSFT, BTC-USD",
-    )
-    start = gr.Textbox(value="2020-01-01", label="Start Date  (YYYY-MM-DD)")
-    end = gr.Textbox(value=str(date.today()), label="End Date  (YYYY-MM-DD)")  # noqa: DTZ011
-    n_reg = gr.Slider(2, 5, value=3, step=1, label="Number of Regimes")
-    auto = gr.Checkbox(
-        label="Auto-select (BIC)",
-        value=False,
-        info="Automatically find optimal number of regimes",
-    )
+    ticker = gr.Textbox(value=default_ticker, label="Ticker Symbol",
+                        info="e.g. SPY, AAPL, ^GSPC, MSFT, BTC-USD")
+    start  = gr.Textbox(value="2020-01-01", label="Start Date  (YYYY-MM-DD)")
+    end    = gr.Textbox(value=str(date.today()), label="End Date  (YYYY-MM-DD)")
+    n_reg  = gr.Slider(2, 5, value=3, step=1, label="Number of Regimes")
+    auto   = gr.Checkbox(label="Auto-select (BIC)", value=False,
+                         info="Automatically find optimal number of regimes")
     return ticker, start, end, n_reg, auto
 
 
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="Market Regime Detector — HMM") as demo:
+
     gr.HTML("""
     <div class="mrd-header">
         <div class="mrd-title">📈 MARKET REGIME DETECTOR</div>
@@ -399,6 +363,7 @@ with gr.Blocks(title="Market Regime Detector — HMM") as demo:
     """)
 
     with gr.Tabs():
+
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Regime Detection
         # ══════════════════════════════════════════════════════════════════
@@ -438,18 +403,13 @@ with gr.Blocks(title="Market Regime Detector — HMM") as demo:
                     """)
 
                 with gr.Column(scale=2):
-                    d1_status = gr.Markdown(
-                        "*Configure parameters and click Detect Regimes.*"
-                    )
-                    d1_gauge = gr.Plot(label="Current Regime Probability")
+                    d1_status = gr.Markdown("*Configure parameters and click Detect Regimes.*")
+                    d1_gauge  = gr.Plot(label="Current Regime Probability")
 
             d1_chart = gr.Plot(label="Regime Price Chart")
 
-            btn1.click(
-                cb_regime_detection,
-                [t1, s1, e1, n1, a1],
-                [d1_chart, d1_gauge, d1_status],
-            )
+            btn1.click(cb_regime_detection, [t1, s1, e1, n1, a1],
+                       [d1_chart, d1_gauge, d1_status])
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 2 — Regime Analytics
@@ -500,9 +460,7 @@ with gr.Blocks(title="Market Regime Detector — HMM") as demo:
                     t3, s3, e3, n3, a3 = _input_panel("SPY", "3")
                     btn3 = gr.Button("⚖️ RUN BACKTEST", variant="primary")
                 with gr.Column(scale=2):
-                    d3_summary = gr.Markdown(
-                        "*Run backtest to see performance metrics.*"
-                    )
+                    d3_summary = gr.Markdown("*Run backtest to see performance metrics.*")
 
             d3_chart = gr.Plot(label="Strategy Performance")
             btn3.click(cb_backtest, [t3, s3, e3, n3, a3], [d3_chart, d3_summary])
@@ -531,9 +489,9 @@ with gr.Blocks(title="Market Regime Detector — HMM") as demo:
                         label="Tickers (comma-separated, max 6)",
                     )
                     ma_start = gr.Textbox(value="2020-01-01", label="Start Date")
-                    ma_end = gr.Textbox(value=str(date.today()), label="End Date")  # noqa: DTZ011
-                    ma_n = gr.Slider(2, 4, value=3, step=1, label="Regimes per Asset")
-                    btn4 = gr.Button("🌐 COMPARE ASSETS", variant="primary")
+                    ma_end   = gr.Textbox(value=str(date.today()), label="End Date")
+                    ma_n     = gr.Slider(2, 4, value=3, step=1, label="Regimes per Asset")
+                    btn4     = gr.Button("🌐 COMPARE ASSETS", variant="primary")
 
                     gr.HTML("""
                     <div style="background:#0f1520;border:1px solid #1e2a3d;
@@ -555,11 +513,8 @@ with gr.Blocks(title="Market Regime Detector — HMM") as demo:
                     d4_status = gr.Markdown("*Enter tickers and click Compare.*")
 
             d4_chart = gr.Plot(label="Cross-Asset Regime Timeline")
-            btn4.click(
-                cb_multi_asset,
-                [ma_tickers, ma_start, ma_end, ma_n],
-                [d4_chart, d4_status],
-            )
+            btn4.click(cb_multi_asset, [ma_tickers, ma_start, ma_end, ma_n],
+                       [d4_chart, d4_status])
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 5 — How It Works

@@ -1,6 +1,6 @@
-# Contributing to the Reinforcement Learning Portfolio
+# Contributing to the Reinforcement Learning Lab
 
-Thank you for showing interest in contributing to the Reinforcement Learning Portfolio! We want this to be the most beginner-friendly and educational repository for reinforcement learning on GitHub, and your contributions help make that possible.
+Thank you for showing interest in contributing to the Reinforcement Learning Lab! We want this to be the most beginner-friendly and educational repository for reinforcement learning on GitHub, and your contributions help make that possible.
 
 ---
 

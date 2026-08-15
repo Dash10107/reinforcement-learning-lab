@@ -4,20 +4,17 @@ Requires deterministic price/solar/load knowledge — acts as a theoretical uppe
 """
 
 from __future__ import annotations
-
 import numpy as np
-from env.grid_env import ACTION_TO_KW, SmartGridEnv
+from env.grid_env import SmartGridEnv, ACTION_TO_KW
 
 
-def solve_dp(
-    env: SmartGridEnv, n_soc_levels: int = 50
-) -> tuple[np.ndarray, np.ndarray]:
+def solve_dp(env: SmartGridEnv, n_soc_levels: int = 50) -> tuple[np.ndarray, np.ndarray]:
     """
     Backward induction on discretised SOC states.
     Returns (policy, value) arrays of shape (24, n_soc_levels).
     """
     soc_grid = np.linspace(0, env.cap, n_soc_levels)
-    V = np.zeros((25, n_soc_levels))  # terminal value = 0
+    V = np.zeros((25, n_soc_levels))   # terminal value = 0
     policy = np.zeros((24, n_soc_levels), dtype=int)
 
     prices = env._prices
@@ -87,9 +84,10 @@ def solve_dp(
     return policy, V, soc_grid
 
 
-def rollout_dp(env: SmartGridEnv, policy: np.ndarray, soc_grid: np.ndarray) -> float:
+def rollout_dp(env: SmartGridEnv, policy: np.ndarray,
+               soc_grid: np.ndarray) -> float:
     """Execute the DP policy on the environment."""
-    obs, _ = env.reset()  # noqa: RUF059
+    obs, _ = env.reset()
     env.soc = 0.0
     env.hour = 0
     env.log = env._empty_log()

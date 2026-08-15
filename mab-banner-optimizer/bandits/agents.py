@@ -5,10 +5,8 @@ Multi-Armed Bandit agents — all implement the same interface:
 """
 
 from __future__ import annotations
-
-from abc import ABC, abstractmethod
-
 import numpy as np
+from abc import ABC, abstractmethod
 
 
 class BanditAgent(ABC):
@@ -16,8 +14,8 @@ class BanditAgent(ABC):
         self.n_arms = n_arms
         self.name = name
         self.t = 0
-        self.counts = np.zeros(n_arms, dtype=int)  # pulls per arm
-        self.values = np.zeros(n_arms)  # estimated value per arm
+        self.counts = np.zeros(n_arms, dtype=int)    # pulls per arm
+        self.values = np.zeros(n_arms)               # estimated value per arm
         self.total_reward = 0.0
         self.regret_history: list[float] = []
         self.reward_history: list[float] = []
@@ -25,7 +23,8 @@ class BanditAgent(ABC):
         self.cumulative_regret = 0.0
 
     @abstractmethod
-    def choose(self) -> int: ...
+    def choose(self) -> int:
+        ...
 
     def update(self, arm: int, reward: float, _converted: bool, optimal_ev: float):
         self.counts[arm] += 1
@@ -51,13 +50,11 @@ class BanditAgent(ABC):
 
 # ── Epsilon-Greedy ────────────────────────────────────────────────────────────
 
-
 class EpsilonGreedy(BanditAgent):
     """
     With probability ε: random exploration.
     Otherwise: exploit the arm with highest estimated value.
     """
-
     def __init__(self, n_arms: int, epsilon: float = 0.1):
         super().__init__(n_arms, f"ε-Greedy (ε={epsilon})")
         self.epsilon = epsilon
@@ -70,10 +67,8 @@ class EpsilonGreedy(BanditAgent):
 
 # ── Decaying Epsilon-Greedy ────────────────────────────────────────────────
 
-
 class DecayingEpsilonGreedy(BanditAgent):
     """Epsilon decays as 1/sqrt(t) — more explore early, more exploit later."""
-
     def __init__(self, n_arms: int, decay: float = 1.0):
         super().__init__(n_arms, "Decaying ε-Greedy")
         self.decay = decay
@@ -87,13 +82,11 @@ class DecayingEpsilonGreedy(BanditAgent):
 
 # ── UCB1 ──────────────────────────────────────────────────────────────────────
 
-
 class UCB1(BanditAgent):
     """
     Upper Confidence Bound: choose arm with highest Q + bonus.
     Bonus = c * sqrt(log(t) / n_pulls)
     """
-
     def __init__(self, n_arms: int, c: float = 2.0):
         super().__init__(n_arms, f"UCB1 (c={c})")
         self.c = c
@@ -110,17 +103,15 @@ class UCB1(BanditAgent):
 
 # ── Thompson Sampling ─────────────────────────────────────────────────────────
 
-
 class ThompsonSampling(BanditAgent):
     """
     Bayesian bandit: maintain Beta(α, β) posterior for each arm's CTR.
     Sample from posteriors, pick highest sample.
     """
-
     def __init__(self, n_arms: int):
         super().__init__(n_arms, "Thompson Sampling")
-        self.alpha = np.ones(n_arms)  # successes + 1
-        self.beta = np.ones(n_arms)  # failures  + 1
+        self.alpha = np.ones(n_arms)   # successes + 1
+        self.beta  = np.ones(n_arms)   # failures  + 1
 
     def choose(self) -> int:
         samples = np.random.beta(self.alpha, self.beta)
@@ -147,18 +138,16 @@ class ThompsonSampling(BanditAgent):
 
 # ── Gradient Bandit ───────────────────────────────────────────────────────────
 
-
 class GradientBandit(BanditAgent):
     """
     Learns a preference H(a) for each arm using stochastic gradient ascent.
     Action probabilities: softmax(H).
     """
-
     def __init__(self, n_arms: int, alpha: float = 0.1):
         super().__init__(n_arms, f"Gradient Bandit (α={alpha})")
         self.alpha_lr = alpha
-        self.H = np.zeros(n_arms)  # preferences
-        self.baseline = 0.0  # running average reward
+        self.H = np.zeros(n_arms)   # preferences
+        self.baseline = 0.0          # running average reward
 
     def _softmax(self) -> np.ndarray:
         h = self.H - self.H.max()
@@ -182,13 +171,11 @@ class GradientBandit(BanditAgent):
 
 # ── EXP3 (Adversarial Bandit) ─────────────────────────────────────────────────
 
-
 class EXP3(BanditAgent):
     """
     EXP3: Exponential-weight algorithm for Exploration and Exploitation.
     Works even in adversarial (non-stochastic) environments.
     """
-
     def __init__(self, n_arms: int, gamma: float = 0.1):
         super().__init__(n_arms, f"EXP3 (γ={gamma})")
         self.gamma = gamma
@@ -215,21 +202,21 @@ class EXP3(BanditAgent):
 # ── Factory ───────────────────────────────────────────────────────────────────
 
 AGENT_REGISTRY = {
-    "Thompson Sampling": lambda n, p: ThompsonSampling(n),
-    "UCB1": lambda n, p: UCB1(n, c=p.get("c", 2.0)),
-    "Epsilon-Greedy": lambda n, p: EpsilonGreedy(n, epsilon=p.get("epsilon", 0.1)),
+    "Thompson Sampling":     lambda n, p: ThompsonSampling(n),
+    "UCB1":                  lambda n, p: UCB1(n, c=p.get("c", 2.0)),
+    "Epsilon-Greedy":        lambda n, p: EpsilonGreedy(n, epsilon=p.get("epsilon", 0.1)),
     "Decaying Epsilon-Greedy": lambda n, p: DecayingEpsilonGreedy(n),
-    "Gradient Bandit": lambda n, p: GradientBandit(n, alpha=p.get("alpha", 0.1)),
-    "EXP3 (Adversarial)": lambda n, p: EXP3(n, gamma=p.get("gamma", 0.1)),
+    "Gradient Bandit":       lambda n, p: GradientBandit(n, alpha=p.get("alpha", 0.1)),
+    "EXP3 (Adversarial)":    lambda n, p: EXP3(n, gamma=p.get("gamma", 0.1)),
 }
 
 AGENT_COLORS = {
-    "Thompson Sampling": "#00d4aa",
-    "UCB1": "#1890ff",
-    "Epsilon-Greedy": "#faad14",
+    "Thompson Sampling":     "#00d4aa",
+    "UCB1":                  "#1890ff",
+    "Epsilon-Greedy":        "#faad14",
     "Decaying Epsilon-Greedy": "#f59e0b",
-    "Gradient Bandit": "#a855f7",
-    "EXP3 (Adversarial)": "#ef4444",
+    "Gradient Bandit":       "#a855f7",
+    "EXP3 (Adversarial)":    "#ef4444",
 }
 
 

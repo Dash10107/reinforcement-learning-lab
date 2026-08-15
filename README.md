@@ -1,203 +1,94 @@
----
-title: Swarm Architect Marl
-emoji: 🤖
-colorFrom: pink
-colorTo: red
-sdk: gradio
-sdk_version: 6.12.0
-app_file: app.py
-pinned: false
----
-
-# Swarm Architect — Multi-Agent Cooperative Control with IPPO
-
 <p align="center">
-  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course_Chapter-Read-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Chapter"></a>
-  <a href="https://huggingface.co/spaces/Dash10107/swarm-architect-marl"><img src="https://img.shields.io/badge/Live_Demo-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demo"></a>
+  <img src="assets/banner.png" alt="Reinforcement Learning Lab Banner" width="100%">
 </p>
 
-A multi-agent reinforcement learning system where five agents learn to coordinate and spread across a shared space to cover as many landmarks as possible. Each agent is trained independently using PPO and must figure out through experience alone how to claim a different landmark without colliding with its teammates. You can train the agents, watch them run, evaluate their performance, and explore the algorithm in detail.
+<p align="center">
+  <a href="https://dash10107.github.io/reinforcement-learning-lab/en/"><img src="https://img.shields.io/badge/Course-Website-blue?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Course Website"></a>
+  <a href="https://huggingface.co/spaces/Dash10107"><img src="https://img.shields.io/badge/Live_Demos-Hugging_Face-yellow?style=for-the-badge&logo=huggingface&logoColor=white" alt="Hugging Face Demos"></a>
+  <a href="https://github.com/Dash10107/reinforcement-learning-lab/stargazers"><img src="https://img.shields.io/github/stars/Dash10107/reinforcement-learning-lab?style=for-the-badge" alt="GitHub stars"></a>
+  <a href="https://github.com/Dash10107/reinforcement-learning-lab/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Dash10107/reinforcement-learning-lab?style=for-the-badge" alt="License"></a>
+</p>
 
-**This project is part of the [Reinforcement Learning Lab](https://github.com/Dash10107/reinforcement-learning-lab) — an interactive course and lab that bridges the gap between RL theory and practical implementation.**
+**Reinforcement Learning Lab** is an open-source, interactive course and project hub designed to bridge the gap between mathematical theory and practical RL implementation. 
 
----
+Instead of just reading equations or blindly calling high-level APIs, you can learn the concept, inspect the from-scratch code, run the interactive training dashboard, and watch the agent learn in real-time.
 
-## What problem does this solve?
-
-Imagine five people trying to stand on five different marked spots on a floor, but they cannot communicate and cannot see the full picture — only their immediate surroundings. If they all rush toward the same spot, most of them miss. The optimal strategy requires each person to implicitly understand that others are heading somewhere and choose a different target.
-
-This is a cooperative coverage problem. It appears in real applications: teams of drones covering a disaster area for search and rescue, sensor networks that need to spread to provide full coverage, or autonomous vehicles positioning themselves to monitor intersections.
-
-The challenge for RL is that what one agent does changes what the others should do. This interdependency makes the learning problem much harder than single-agent RL.
-
----
-
-## The Task: Simple Spread
-
-The environment is the Simple Spread cooperative task from PettingZoo's Multi-Particle Environment suite. Five agents and five landmarks are placed in a continuous 2D space. The team earns a negative reward for each landmark that is not covered by at least one agent, and an additional penalty for agent-agent collisions.
-
-The optimal strategy is for each agent to claim one distinct landmark and hold it. Getting there requires the agents to implicitly divide the landmarks among themselves without any direct communication — just by observing each other's positions and learning from shared reward signals.
+[**Explore the Course**](https://dash10107.github.io/reinforcement-learning-lab/en/) • [**Try the Demos**](https://huggingface.co/spaces/Dash10107) • [**Getting Started**](./GETTING_STARTED.md)
 
 ---
 
-## The Algorithm: Independent PPO (IPPO)
+## 🚀 Quick Start
 
-IPPO treats each agent as if it were the only agent in the world. Each of the five agents maintains its own Actor and Critic networks and trains on its own experience. There is no shared policy, no centralised critic, and no explicit communication between agents.
+The fastest way to experience the lab is to try one of the zero-install browser demos, or spin up the code locally.
 
-**The Actor** for each agent outputs a categorical probability distribution over five discrete actions: no movement, up, down, left, right. During training it samples from this distribution for exploration. During evaluation it picks the highest-probability action greedily.
+### 1. Zero-Install Demos
+Every project is deployed live. **[Try the Hugging Face Spaces collection →](https://huggingface.co/spaces/Dash10107)**
 
-**The Critic** estimates the value of the agent's current state — how much cumulative reward it expects to receive from here. This value estimate is used to compute advantages via Generalised Advantage Estimation (GAE):
-
-```
-delta_t = reward_t + gamma * V(next_state) - V(current_state)
-
-advantage_t = delta_t + (gamma * lambda) * advantage_(t+1)
-```
-
-GAE with lambda near 1 produces low-bias, higher-variance advantage estimates. Lambda near 0 produces high-bias, low-variance estimates that rely more on the critic. The default lambda of 0.95 balances these.
-
-**The PPO update** clips the ratio between the new and old policy to prevent large destabilising updates:
-
-```
-ratio = new_policy(action | state) / old_policy(action | state)
-
-actor_loss = -min(ratio * advantage, clip(ratio, 1-0.2, 1+0.2) * advantage)
-```
-
-This clipping is the key PPO innovation. It means the gradient is ignored whenever the policy update would move the ratio outside the (0.8, 1.2) range, keeping each step small and stable.
-
-**Entropy regularisation** adds a bonus for policies that are not too certain. An entropy coefficient of 0.01 discourages the agent from committing to one action too early in training, maintaining exploration throughout.
-
-**Why does independent learning work here?** Simple Spread has a shared reward, partial observability, and no adversarial agents. From each agent's perspective the environment is relatively stationary (other agents are slow to change their policies), which is the condition IPPO needs to converge. In adversarial or highly competitive environments IPPO breaks down, but for cooperative coverage tasks it works well.
-
----
-
-## The Environment Details
-
-The environment is a continuous 2D world with no walls.
-
-**Observation per agent (30-dimensional):** Each agent sees its own position and velocity, the relative positions and velocities of all four other agents, and the positions of all five landmarks. This gives 30 numbers in total, all in a continuous range.
-
-**Action space:** 5 discrete actions — no-op, move up, move down, move left, move right.
-
-**Reward structure:**
-
-```
-team_penalty = -(number of landmarks not covered by any agent)
-collision_penalty = -(number of agent-agent collisions) * local_ratio
-```
-
-The local_ratio of 0.5 means half the reward comes from the global coverage score and half from avoiding local collisions. This balance encourages both good global coordination and respectful local behaviour.
-
-**Episode length:** 50 steps maximum per episode.
-
----
-
-## Project Structure
-
-```
-swarm-architect-marl/
-├── app.py                    main Gradio application
-├── config.py                 EnvConfig, NetworkConfig, PPOConfig, TrainConfig
-├── train.py                  standalone CLI training script
-├── agents/
-│   ├── networks.py           Actor and Critic network architectures
-│   ├── buffer.py             rollout buffer with GAE computation
-│   └── ippo.py               IPPOAgent, IPPOTrainer, training loop
-├── environment/
-│   └── wrapper.py            PettingZoo environment factory
-├── evaluation/
-│   └── metrics.py            TrainingLog and evaluate_agents utilities
-└── visualization/
-    └── animator.py           episode GIF export and training plots
-```
-
----
-
-## Quick Setup
-
+### 2. Run Locally
+Clone the repository and spin up a training lab on your own machine:
 ```bash
 git clone https://github.com/Dash10107/reinforcement-learning-lab.git
-cd swarm-architect-marl
+cd reinforcement-learning-lab
+
+# Setup environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
 pip install -r requirements.txt
+
+# Run a project (e.g., Deep Q-Network for Green Logistics)
+cd green-logistics-optimizer
 python app.py
 ```
-
-Open `http://localhost:7860`.
-
-**Suggested starting point:** Go to the Watch the Swarm tab and click Watch the Agents. You will see an animated GIF of a pre-trained episode with five coloured agents trying to cover five landmarks. Then go to Train Your Swarm and click Start Quick Training for a 200-episode run. After training finishes, go to Mission Report and click Refresh to see the reward and delivery curves.
-
-You can also run training from the command line for longer sessions:
-
-```bash
-python train.py --episodes 500
-```
+*This will launch a local dashboard where you can tune hyperparameters and watch the agent train.*
 
 ---
 
-## What each tab shows
+## 🗺️ Syllabus & Project Index
 
-**The Mission:** An introduction to the task, how agents and landmarks work, and a step-by-step guide to using the app. Explains what RLHF is in plain terms without assuming prior knowledge.
+Our curriculum progresses from tabular foundations to modern multi-agent and alignment systems. 
 
-**Watch the Swarm:** Runs the current best policy for one episode and shows an animated GIF replay. A score card below shows the coordination grade (A through F), team reward, and number of steps.
-
-**Train Your Swarm:** One-click Quick Start training with recommended settings, or an expandable Advanced Settings section for configuring episodes, learning rate, discount factor, exploration decay, and rollout size. All slider labels use plain English descriptions rather than Greek letters.
-
-**Mission Report:** After training, click Refresh to see three charts: team reward per episode, deliveries per episode, and collisions per episode. A formal evaluation section runs a configurable number of test episodes and shows a per-agent reward breakdown.
-
----
-
-## Key hyperparameters
-
-| Parameter | Value | Purpose |
-|---|---|---|
-| Learning rate (actor) | 3e-4 | How fast the policy updates |
-| Learning rate (critic) | 1e-3 | Critic updates faster for stable value estimates |
-| Gamma | 0.95 | Discount factor for future rewards |
-| GAE lambda | 0.95 | Advantage estimation bias-variance tradeoff |
-| Clip epsilon | 0.2 | Maximum allowed policy ratio change per update |
-| Entropy coefficient | 0.01 | Encourages exploration throughout training |
-| Rollout steps | 128 | Steps collected before each gradient update |
-| Batch size | 64 | Mini-batch size during PPO update epochs |
-| N epochs | 4 | Number of update passes per rollout batch |
+| Level | Topic | Project / Implementation | Interactive Demo |
+|---|---|---|---|
+| **1. Foundations** | Multi-Armed Bandits | [MAB Banner Optimizer](./mab-banner-optimizer) | [▶ Run](https://huggingface.co/spaces/Dash10107/mab-banner-optimizer) |
+| | MDP & Tabular RL | [RL Maze Solver](./rl_maze_solver) (Q-Learning/SARSA/MC) | [▶ Run](https://huggingface.co/spaces/Dash10107/rl_maze_solver) |
+| **2. Deep RL** | Deep Q-Networks (DQN) | [Green Logistics Optimizer](./green-logistics-optimizer) | [▶ Run](https://huggingface.co/spaces/Dash10107/green-logistics-optimizer) |
+| | Discrete Control | [Smart Grid Energy Optimizer](./smart-grid-energy-optimizer) | [▶ Run](https://huggingface.co/spaces/Dash10107/smart-grid-energy-optimizer) |
+| **3. Policy Gradients** | Advantage Actor-Critic | [AI Tutor A2C](./AI-Tutor-A2C) | [▶ Run](https://huggingface.co/spaces/Dash10107/AI-Tutor-A2C) |
+| | Soft Actor-Critic (SAC) | [Rocket Lander SAC](./rocket-lander-sac) | [▶ Run](https://huggingface.co/spaces/Dash10107/rocket-lander-sac) |
+| | PPO (Continuous 3D) | [Unity RL Huggy Demo](./Unity-RL-Huggy-Demo) | [▶ Run](https://huggingface.co/spaces/Dash10107/Unity-RL-Huggy-Demo) |
+| **4. Advanced Systems** | Multi-Agent RL (IPPO) | [MARL Warehouse Sim](./marl-warehouse-sim) | [▶ Run](https://huggingface.co/spaces/Dash10107/marl-warehouse-sim) |
+| | Cooperative MARL | [Swarm Architect MARL](./swarm-architect-marl) | [▶ Run](https://huggingface.co/spaces/Dash10107/swarm-architect-marl) |
+| | Model-Based RL (MPC) | [MBRL Pendulum Playground](./mbrl-pendulum-playground) | [▶ Run](https://huggingface.co/spaces/Dash10107/mbrl-pendulum-playground) |
+| | Human Alignment (RLHF) | [Digital Calligrapher RLHF](./digital-calligrapher-rlhf) | [▶ Run](https://huggingface.co/spaces/Dash10107/digital-calligrapher-rlhf) |
+| **Bonus** | Hidden Markov Models | [Market Regime Detector HMM](./market-regime-detector-hmm) | [▶ Run](https://huggingface.co/spaces/Dash10107/market-regime-detector-hmm) |
 
 ---
 
-## Requirements
+## 📸 Featured Environments
 
-```
-gradio>=6.0.0
-torch
-numpy
-matplotlib
-mpe2
-pettingzoo
-```
+We believe visualization is key to intuition. Our environments are custom-built to expose the inner workings of the algorithms.
 
----
-
-## Things to Try
-
-**1. Watch untrained agents before training anything.**
-Go to Watch the Swarm before any training. Agents move randomly and cluster together. After Quick Training (200 episodes) watch again. Even a short training run produces visible coordination improvement.
-
-**2. Run Quick Training three times and compare curves.**
-Each run starts with a different random initialisation. Reward curves will look different but should all trend upward. IPPO consistently improves despite stochasticity.
-
-**3. Find when coordination emerges in the reward curve.**
-Look at the Mission Report reward curve carefully. There is usually a slow improvement phase then a sharper jump. That transition is when emergent landmark claiming begins — typically around episodes 50 to 150.
-
-**4. Evaluate and check per-agent reward balance.**
-Run 3 test episodes in Mission Report. If all five agents earn similar rewards they are all contributing equally. If one earns much less, that agent may be consistently failing to hold its landmark.
-
-**5. Train with a high learning rate vs the default.**
-In Advanced Settings set learning rate to 1e-3 (default is 3e-4). Higher LR trains faster but less stably. Compare the reward curves at episode 200. This shows how sensitive IPPO is to this single hyperparameter.
+<div align="center">
+  <img src="assets/previews/rocket_lander.png" width="48%" alt="SAC Rocket Lander">
+  <img src="assets/previews/warehouse_robots.png" width="48%" alt="MARL Warehouse">
+</div>
+<div align="center">
+  <img src="assets/previews/maze_solver.png" width="48%" alt="Tabular RL Maze Solver">
+  <img src="assets/previews/digital_calligrapher.png" width="48%" alt="RLHF Calligrapher">
+</div>
 
 ---
 
-## Further Reading
+## 🤝 Community & Contributing
 
-- Schulman et al., Proximal Policy Optimization Algorithms (2017) — the original PPO paper
-- Lowe et al., Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments (2017) — MADDPG paper which uses the same Simple Spread task
-- de Witt et al., Is Independent Learning All You Need in the StarCraft Multi-Agent Challenge? (2020) — empirical evidence for when IPPO works
-- Schulman et al., High-Dimensional Continuous Control Using Generalised Advantage Estimation (2016) — the GAE paper
+We welcome contributions! Whether you want to fix a bug, improve documentation, or add an entirely new RL algorithm or environment, please feel free to fork the repository.
+
+1. Check out our [Contribution Guidelines](./CONTRIBUTING.md).
+2. Grab an open issue or suggest a new feature.
+3. Build, experiment, and open a PR!
+
+If this repository helped you learn, consider leaving a ⭐ **Star** so others can find it!
+
+## 📜 License
+
+This project is licensed under the [MIT License](./LICENSE).

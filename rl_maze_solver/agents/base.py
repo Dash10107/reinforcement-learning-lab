@@ -1,17 +1,10 @@
 from __future__ import annotations
-
 import numpy as np
 
 
 class TabularAgent:
-    def __init__(
-        self,
-        n_states: int,
-        n_actions: int,
-        alpha: float = 0.1,
-        gamma: float = 0.95,
-        epsilon: float = 1.0,
-    ):
+    def __init__(self, n_states: int, n_actions: int,
+                 alpha: float = 0.1, gamma: float = 0.95, epsilon: float = 1.0):
         self.n_states = n_states
         self.n_actions = n_actions
         self.alpha = alpha

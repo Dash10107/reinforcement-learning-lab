@@ -68,4 +68,4 @@ Each chapter has three experiments. If you found a fourth — something that ill
 
 The only style rule for contributions: write for someone who is smart but doesn't know RL yet. Not for someone who already does.
 
-[View on GitHub ↗](https://github.com/Dash10107/rl-portfolio)
+[View on GitHub ↗](https://github.com/Dash10107/reinforcement-learning-lab)

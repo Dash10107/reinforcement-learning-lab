@@ -4,16 +4,15 @@ Wraps training and rollout for the SmartGridEnv.
 """
 
 from __future__ import annotations
-
 import os
 import threading
-from dataclasses import dataclass, field
-
 import numpy as np
-from env.grid_env import SmartGridEnv
+from dataclasses import dataclass, field
 from stable_baselines3 import DQN
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.callbacks import BaseCallback
+
+from env.grid_env import SmartGridEnv
 
 
 @dataclass
@@ -22,7 +21,7 @@ class TrainingState:
     timestep: int = 0
     total_timesteps: int = 0
     episode_rewards: list[float] = field(default_factory=list)
-    mean_rewards: list[float] = field(default_factory=list)  # rolling mean
+    mean_rewards: list[float] = field(default_factory=list)   # rolling mean
     status: str = "idle"
     best_reward: float = float("-inf")
 
@@ -42,9 +41,10 @@ class _LiveCallback(BaseCallback):
                 r = float(info["episode"]["r"])
                 self._state.episode_rewards.append(r)
                 n = len(self._state.episode_rewards)
-                roll = float(np.mean(self._state.episode_rewards[max(0, n - 20) :]))
+                roll = float(np.mean(self._state.episode_rewards[max(0, n-20):]))
                 self._state.mean_rewards.append(roll)
-                self._state.best_reward = max(self._state.best_reward, r)
+                if r > self._state.best_reward:
+                    self._state.best_reward = r
         pct = self._state.timestep / max(self._state.total_timesteps, 1) * 100
         n_ep = len(self._state.episode_rewards)
         roll = self._state.mean_rewards[-1] if self._state.mean_rewards else 0
@@ -77,14 +77,13 @@ def start_training(
 
         env = Monitor(SmartGridEnv(**env_kwargs, stochastic=True))
         model = DQN(
-            "MlpPolicy",
-            env,
+            "MlpPolicy", env,
             learning_rate=learning_rate,
             batch_size=batch_size,
             buffer_size=min(50_000, total_timesteps),
             learning_starts=min(500, total_timesteps // 4),
             gamma=0.97,
-            train_freq=24,  # train every episode
+            train_freq=24,           # train every episode
             target_update_interval=240,
             exploration_fraction=0.3,
             exploration_final_eps=0.05,

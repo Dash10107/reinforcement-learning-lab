@@ -1,18 +1,12 @@
 from __future__ import annotations
-
 import numpy as np
-from maze.env import MazeEnv
-
 from agents.base import TabularAgent
+from maze.env import MazeEnv
 
 
 def train_qlearning(
-    env: MazeEnv,
-    episodes: int,
-    alpha: float,
-    gamma: float,
-    decay: float,
-    seed: int = 0,
+    env: MazeEnv, episodes: int, alpha: float, gamma: float,
+    decay: float, seed: int = 0,
 ) -> tuple[TabularAgent, list[float]]:
     agent = TabularAgent(env.n_states, env.action_space.n, alpha, gamma)
     rng = np.random.default_rng(seed)

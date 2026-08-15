@@ -17,17 +17,10 @@ Actions: 0=stay, 1=up, 2=down, 3=left, 4=right
 """
 
 from __future__ import annotations
-
 import numpy as np
-
 from warehouse.layout import (
-    DELIVERY,
-    PICKUP,
-    SHELF,
-    get_delivery_cells,
-    get_layout,
-    get_open_cells,
-    get_pickup_cells,
+    get_layout, get_open_cells, get_pickup_cells, get_delivery_cells,
+    OPEN, SHELF, PICKUP, DELIVERY,
 )
 
 ACTIONS = [(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -120,20 +113,12 @@ class WarehouseEnv:
             cell = self.grid[robot.row, robot.col]
             gr, gc = robot.goal_row, robot.goal_col
 
-            if (
-                not robot.has_package
-                and cell == PICKUP
-                and (robot.row, robot.col) == (gr, gc)
-            ):
+            if not robot.has_package and cell == PICKUP and (robot.row, robot.col) == (gr, gc):
                 robot.has_package = True
                 rewards[i] += 0.5
                 self._assign_delivery(robot)
 
-            elif (
-                robot.has_package
-                and cell == DELIVERY
-                and (robot.row, robot.col) == (gr, gc)
-            ):
+            elif robot.has_package and cell == DELIVERY and (robot.row, robot.col) == (gr, gc):
                 robot.has_package = False
                 robot.deliveries += 1
                 rewards[i] += 2.0
@@ -173,16 +158,13 @@ class WarehouseEnv:
     def _observations(self) -> dict[str, np.ndarray]:
         obs = {}
         for i, robot in enumerate(self.robots):
-            own = np.array(
-                [
-                    robot.row / (self.H - 1) * 2 - 1,
-                    robot.col / (self.W - 1) * 2 - 1,
-                    robot.goal_row / (self.H - 1) * 2 - 1,
-                    robot.goal_col / (self.W - 1) * 2 - 1,
-                    float(robot.has_package),
-                ],
-                dtype=np.float32,
-            )
+            own = np.array([
+                robot.row / (self.H - 1) * 2 - 1,
+                robot.col / (self.W - 1) * 2 - 1,
+                robot.goal_row / (self.H - 1) * 2 - 1,
+                robot.goal_col / (self.W - 1) * 2 - 1,
+                float(robot.has_package),
+            ], dtype=np.float32)
 
             others = []
             for j, other in enumerate(self.robots):
@@ -198,9 +180,7 @@ class WarehouseEnv:
             while len(others) < 2 * MAX_NEIGHBOURS:
                 others.extend([0.0, 0.0])
 
-            obs[f"robot_{i}"] = np.concatenate(
-                [own, others[: 2 * MAX_NEIGHBOURS]]
-            ).astype(np.float32)
+            obs[f"robot_{i}"] = np.concatenate([own, others[:2 * MAX_NEIGHBOURS]]).astype(np.float32)
 
         return obs
 

@@ -9,25 +9,18 @@ End-to-end reinforcement learning platform for adaptive education:
 """
 
 from __future__ import annotations
-
 import time
-
-import gradio as gr
 import numpy as np
+import gradio as gr
+
+from core.environment import SUBJECTS, SUBJECT_COLORS, N_SUBJECTS
 from core.agent import (
-    MODEL_PATH,
-    TrainingState,
-    get_policy_probs,
-    load_model,
-    simulate_path,
-    start_training,
+    TrainingState, load_model, get_policy_probs,
+    simulate_path, start_training, MODEL_PATH,
 )
-from core.environment import SUBJECT_COLORS, SUBJECTS
 from viz.charts import (
-    episode_analytics,
-    policy_bars,
-    training_chart,
-    trajectory_chart,
+    trajectory_chart, policy_bars, episode_analytics,
+    training_chart, _empty,
 )
 
 # ── Load model on startup ─────────────────────────────────────────────────────
@@ -35,7 +28,6 @@ _model = load_model(MODEL_PATH)
 _train_state = TrainingState()
 
 # ── HTML helpers ──────────────────────────────────────────────────────────────
-
 
 def _stat_val(val: str, color: str = "#f8fafc") -> str:
     return f"<div class='stat-val' style='color:{color}'>{val}</div>"
@@ -45,15 +37,15 @@ def _prob_bars_html(probs: list[float]) -> str:
     best = int(np.argmax(probs))
     html = ""
     for i, (name, prob) in enumerate(zip(SUBJECTS, probs)):
-        w = prob * 100
+        w   = prob * 100
         col = SUBJECT_COLORS[i]
         crown = " 👑" if i == best else ""
         html += f"""
         <div style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;
                       font-size:0.78rem;color:#94a3b8;margin-bottom:4px">
-            <span style="color:{col if i == best else "#94a3b8"};
-                         font-weight:{"600" if i == best else "400"}">
+            <span style="color:{col if i==best else '#94a3b8'};
+                         font-weight:{'600' if i==best else '400'}">
               {name}{crown}
             </span>
             <span style="font-family:'JetBrains Mono',monospace">{w:.1f}%</span>
@@ -61,7 +53,7 @@ def _prob_bars_html(probs: list[float]) -> str:
           <div style="height:6px;background:rgba(255,255,255,0.05);
                       border-radius:3px;overflow:hidden">
             <div style="height:100%;width:{w}%;background:{col};
-                        transition:width 0.5s ease;opacity:{"1" if i == best else "0.55"}">
+                        transition:width 0.5s ease;opacity:{'1' if i==best else '0.55'}">
             </div>
           </div>
         </div>"""
@@ -69,8 +61,8 @@ def _prob_bars_html(probs: list[float]) -> str:
 
 
 def _insights_html(probs: list[float], avg: float, votes: int = 0) -> str:
-    best = int(np.argmax(probs))
-    conf = max(probs) * 100
+    best   = int(np.argmax(probs))
+    conf   = max(probs) * 100
     second = sorted(range(len(probs)), key=lambda i: -probs[i])[1]
     return f"""
 <div style="font-size:0.82rem;color:#94a3b8;line-height:1.7;">
@@ -81,7 +73,7 @@ def _insights_html(probs: list[float], avg: float, votes: int = 0) -> str:
   </div>
   <div style="margin-bottom:8px">
     Second choice: <strong style="color:{SUBJECT_COLORS[second]}">
-    {SUBJECTS[second]}</strong> ({probs[second] * 100:.1f}%).
+    {SUBJECTS[second]}</strong> ({probs[second]*100:.1f}%).
   </div>
   <div>
     Current average proficiency: <strong style="color:#f8fafc">
@@ -92,13 +84,12 @@ def _insights_html(probs: list[float], avg: float, votes: int = 0) -> str:
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
 
-
 def cb_analyze(*vals):
-    pct = list(vals)
-    avg = sum(pct) / len(pct)
+    pct  = list(vals)
+    avg  = sum(pct) / len(pct)
     probs = get_policy_probs(_model, pct).tolist()
-    best = int(np.argmax(probs))
-    conf = max(probs) * 100
+    best  = int(np.argmax(probs))
+    conf  = max(probs) * 100
 
     chart = policy_bars(probs, pct)
 
@@ -114,61 +105,58 @@ def cb_analyze(*vals):
 
 def cb_simulate(*vals_and_steps):
     *pct_vals, n_steps = vals_and_steps
-    pct = list(pct_vals)
+    pct    = list(pct_vals)
     n_steps = int(n_steps)
 
     history = simulate_path(_model, pct, n_steps=n_steps, deterministic=True)
 
     for i, step_data in enumerate(history):
         state_pct = step_data["state"]
-        probs = step_data["probs"]
-        action = step_data["action"]
-        avg = sum(state_pct) / len(state_pct)
-        conf = max(probs) * 100
-        best = int(np.argmax(probs))
+        probs     = step_data["probs"]
+        action    = step_data["action"]
+        avg       = sum(state_pct) / len(state_pct)
+        conf      = max(probs) * 100
+        best      = int(np.argmax(probs))
 
         status_html = f"""
 <div style="display:flex;align-items:center;gap:12px;padding:8px 14px;
             background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);
             border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:#a5b4fc">
-  <span>STEP {step_data["step"]}/{n_steps}</span>
+  <span>STEP {step_data['step']}/{n_steps}</span>
   <span style="color:#f8fafc">→</span>
   <span style="color:{SUBJECT_COLORS[action]}">{SUBJECTS[action]}</span>
   <span style="color:#64748b">|</span>
-  <span>reward: {step_data["reward"]:.3f}</span>
+  <span>reward: {step_data['reward']:.3f}</span>
   {'<span style="color:#10b981">✓ MASTERED</span>' if step_data["done"] else ""}
 </div>"""
 
         yield (
-            *state_pct,  # 5 sliders
-            _stat_val(f"{avg:.1f}%"),  # avg
-            _stat_val(f"{conf:.1f}%", "#6366f1"),  # conf
+            *state_pct,                              # 5 sliders
+            _stat_val(f"{avg:.1f}%"),               # avg
+            _stat_val(f"{conf:.1f}%", "#6366f1"),   # conf
             _stat_val(SUBJECTS[best], SUBJECT_COLORS[best]),  # focus
-            _prob_bars_html(probs),  # bars
-            _insights_html(probs, avg),  # insights
-            status_html,  # step status
+            _prob_bars_html(probs),                  # bars
+            _insights_html(probs, avg),              # insights
+            status_html,                             # step status
         )
         time.sleep(0.35)
         if step_data["done"]:
             break
 
     # Final charts (after loop finishes)
-    traj = trajectory_chart(history)  # noqa: F841
-    epan = episode_analytics(history)  # noqa: F841
+    traj   = trajectory_chart(history)
+    epan   = episode_analytics(history)
     # Clear status
     yield (
         *history[-1]["state"],
-        _stat_val(f"{sum(history[-1]['state']) / len(history[-1]['state']):.1f}%"),
-        _stat_val(f"{max(history[-1]['probs']) * 100:.1f}%", "#6366f1"),
-        _stat_val(
-            SUBJECTS[int(np.argmax(history[-1]["probs"]))],
-            SUBJECT_COLORS[int(np.argmax(history[-1]["probs"]))],
-        ),
+        _stat_val(f"{sum(history[-1]['state'])/len(history[-1]['state']):.1f}%"),
+        _stat_val(f"{max(history[-1]['probs'])*100:.1f}%", "#6366f1"),
+        _stat_val(SUBJECTS[int(np.argmax(history[-1]['probs']))],
+                  SUBJECT_COLORS[int(np.argmax(history[-1]['probs']))]),
         _prob_bars_html(history[-1]["probs"]),
-        _insights_html(
-            history[-1]["probs"], sum(history[-1]["state"]) / len(history[-1]["state"])
-        ),
-        "<div></div>",  # clear status
+        _insights_html(history[-1]["probs"],
+                       sum(history[-1]["state"])/len(history[-1]["state"])),
+        "<div></div>",   # clear status
     )
 
 
@@ -193,7 +181,7 @@ def cb_refresh_training():
         try:
             _model = load_model(MODEL_PATH)
             note = "  ✓ Model reloaded."
-        except Exception:  # noqa: BLE001
+        except Exception:
             note = ""
     else:
         note = ""
@@ -371,6 +359,7 @@ RADAR_JS = """
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
+
     gr.HTML("""
     <div class="tutor-header">
         <div class="tutor-title">AI Tutor Pro</div>
@@ -387,11 +376,14 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
     """)
 
     with gr.Tabs():
+
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — Dashboard
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("📊 Dashboard"):
+
             with gr.Row(equal_height=False):
+
                 # ── Sidebar: sliders ──────────────────────────────────────
                 with gr.Column(scale=1, elem_classes="glass-card", min_width=260):
                     gr.HTML("""
@@ -409,23 +401,22 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
 
                     s_math = gr.Slider(0, 100, value=25, step=1, label="Mathematics")
                     s_phys = gr.Slider(0, 100, value=30, step=1, label="Physics")
-                    s_lit = gr.Slider(0, 100, value=40, step=1, label="Literature")
+                    s_lit  = gr.Slider(0, 100, value=40, step=1, label="Literature")
                     s_hist = gr.Slider(0, 100, value=20, step=1, label="History")
-                    s_cs = gr.Slider(0, 100, value=35, step=1, label="Computer Science")
+                    s_cs   = gr.Slider(0, 100, value=35, step=1, label="Computer Science")
                     s_list = [s_math, s_phys, s_lit, s_hist, s_cs]
 
                     gr.HTML("<div style='height:0.5rem'></div>")
-                    btn_analyze = gr.Button("🔍 Analyse State", variant="primary")
+                    btn_analyze  = gr.Button("🔍 Analyse State", variant="primary")
                     btn_simulate = gr.Button("▶ Simulate Path", variant="secondary")
 
                 # ── Main panel ────────────────────────────────────────────
                 with gr.Column(scale=3):
+
                     # Stat cards row
                     with gr.Row():
                         with gr.Column(elem_classes="glass-card"):
-                            gr.HTML(
-                                "<div class='stat-header'>Average Proficiency</div>"
-                            )
+                            gr.HTML("<div class='stat-header'>Average Proficiency</div>")
                             v_avg = gr.HTML(_stat_val("—"))
                         with gr.Column(elem_classes="glass-card"):
                             gr.HTML("<div class='stat-header'>Policy Confidence</div>")
@@ -449,16 +440,12 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
                             sim_status = gr.HTML("<div></div>")
 
                         with gr.Column(scale=2, elem_classes="glass-card"):
-                            gr.HTML(
-                                "<div class='stat-header'>Action Probabilities</div>"
-                            )
+                            gr.HTML("<div class='stat-header'>Action Probabilities</div>")
                             v_bars = gr.HTML(
                                 "<div style='color:#64748b;font-size:0.82rem;font-style:italic;'>"
                                 "Click Analyse to see policy probabilities.</div>"
                             )
-                            gr.HTML(
-                                "<div style='height:1px;background:rgba(255,255,255,0.06);margin:12px 0'></div>"
-                            )
+                            gr.HTML("<div style='height:1px;background:rgba(255,255,255,0.06);margin:12px 0'></div>")
                             gr.HTML("<div class='stat-header'>Agent Insights</div>")
                             v_insights = gr.HTML(
                                 "<div style='color:#64748b;font-size:0.82rem;font-style:italic;'>"
@@ -467,41 +454,27 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
 
             # Policy chart (below main grid)
             with gr.Row():
-                policy_chart = gr.Image(
-                    label="Policy Analysis Chart",
-                    show_label=False,
-                    type="pil",
-                    height=280,
-                )
+                policy_chart = gr.Image(label="Policy Analysis Chart",
+                                        show_label=False, type="pil", height=280)
 
             # Simulation config
             with gr.Row():
-                n_steps_slider = gr.Slider(
-                    5, 50, value=20, step=5, label="Simulation steps"
-                )
+                n_steps_slider = gr.Slider(5, 50, value=20, step=5,
+                                           label="Simulation steps")
 
             # Wire up
             for s in s_list:
                 s.change(None, inputs=s_list, outputs=None, js=RADAR_JS)
 
             btn_analyze.click(
-                cb_analyze,
-                inputs=s_list,
+                cb_analyze, inputs=s_list,
                 outputs=[v_avg, v_conf, v_focus, v_bars, v_insights, policy_chart],
             )
 
             btn_simulate.click(
                 cb_simulate,
                 inputs=[*s_list, n_steps_slider],
-                outputs=[
-                    *s_list,
-                    v_avg,
-                    v_conf,
-                    v_focus,
-                    v_bars,
-                    v_insights,
-                    sim_status,
-                ],
+                outputs=[*s_list, v_avg, v_conf, v_focus, v_bars, v_insights, sim_status],
             )
 
             demo.load(None, inputs=s_list, outputs=None, js=RADAR_JS)
@@ -527,24 +500,17 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
                 with gr.Column(scale=1, min_width=260, elem_classes="glass-card"):
                     an_math = gr.Slider(0, 100, value=25, step=1, label="Mathematics")
                     an_phys = gr.Slider(0, 100, value=30, step=1, label="Physics")
-                    an_lit = gr.Slider(0, 100, value=40, step=1, label="Literature")
+                    an_lit  = gr.Slider(0, 100, value=40, step=1, label="Literature")
                     an_hist = gr.Slider(0, 100, value=20, step=1, label="History")
-                    an_cs = gr.Slider(
-                        0, 100, value=35, step=1, label="Computer Science"
-                    )
+                    an_cs   = gr.Slider(0, 100, value=35, step=1, label="Computer Science")
                     an_steps = gr.Slider(5, 50, value=25, step=5, label="Steps")
-                    btn_an = gr.Button("📈 Generate Analytics", variant="primary")
+                    btn_an  = gr.Button("📈 Generate Analytics", variant="primary")
 
                 with gr.Column(scale=3):
-                    an_traj = gr.Image(
-                        label="Trajectory", show_label=False, type="pil", height=380
-                    )
-                    an_ep = gr.Image(
-                        label="Episode Analytics",
-                        show_label=False,
-                        type="pil",
-                        height=250,
-                    )
+                    an_traj = gr.Image(label="Trajectory", show_label=False,
+                                       type="pil", height=380)
+                    an_ep   = gr.Image(label="Episode Analytics", show_label=False,
+                                       type="pil", height=250)
 
             btn_an.click(
                 cb_get_traj_charts,
@@ -571,18 +537,13 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
 
             with gr.Row():
                 with gr.Column(scale=1, elem_classes="glass-card"):
-                    t_steps = gr.Slider(
-                        5_000,
-                        100_000,
-                        value=20_000,
-                        step=5_000,
-                        label="Training timesteps",
-                    )
+                    t_steps = gr.Slider(5_000, 100_000, value=20_000, step=5_000,
+                                        label="Training timesteps")
                     with gr.Row():
-                        btn_train = gr.Button("▶ Start Training", variant="primary")
-                        btn_stop_t = gr.Button("⏹ Stop", variant="stop")
+                        btn_train   = gr.Button("▶ Start Training", variant="primary")
+                        btn_stop_t  = gr.Button("⏹ Stop",  variant="stop")
                     btn_refresh = gr.Button("🔄 Refresh", variant="secondary")
-                    t_msg = gr.Textbox(label="Status", lines=2, interactive=False)
+                    t_msg       = gr.Textbox(label="Status", lines=2, interactive=False)
 
                     gr.HTML("""
                     <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);
@@ -603,9 +564,8 @@ with gr.Blocks(title="AI Tutor Pro — A2C Learning Path Optimizer") as demo:
 
                 with gr.Column(scale=2):
                     t_status_md = gr.Markdown("*Start training to see live metrics.*")
-                    t_chart = gr.Image(
-                        label="Training Chart", show_label=False, type="pil", height=300
-                    )
+                    t_chart     = gr.Image(label="Training Chart", show_label=False,
+                                           type="pil", height=300)
 
             btn_train.click(cb_start_training, [t_steps], [t_msg, gr.State()])
             btn_stop_t.click(cb_stop_training, outputs=[t_msg])
@@ -630,9 +590,9 @@ maintains two neural networks:
 
 ## The Tutoring Environment
 
-**State:** Proficiency scores $s = [p_1, p_2, p_3, p_4, p_5] \\in [0, 1]^5$ — one per subject.
+**State:** Proficiency scores $s = [p_1, p_2, p_3, p_4, p_5] \in [0, 1]^5$ — one per subject.
 
-**Action:** Which subject to focus on: $a \\in \\{0, 1, 2, 3, 4\\}$
+**Action:** Which subject to focus on: $a \in \{0, 1, 2, 3, 4\}$
 
 **Transition dynamics at each step:**
 ```
@@ -643,7 +603,7 @@ p_i  ← max(0.0,  p_i - Uniform(0.005, 0.025))  # forgetting reduces all others
 **Reward:** Current proficiency of the chosen subject — encourages the agent
 to focus on subjects where it can make concrete progress.
 
-**Terminal condition:** All $p_i \\geq 0.98$ (mastery across all subjects)
+**Terminal condition:** All $p_i \geq 0.98$ (mastery across all subjects)
 
 ---
 
@@ -651,15 +611,15 @@ to focus on subjects where it can make concrete progress.
 
 At each step the advantage is computed:
 
-$$A(s, a) = r + \\gamma V_\\phi(s') - V_\\phi(s)$$
+$$A(s, a) = r + \gamma V_\phi(s') - V_\phi(s)$$
 
 **Actor loss** (maximise expected advantage):
-$$\\mathcal{L}_\\pi = -\\log \\pi_\theta(a|s) \\cdot A(s,a) - \beta H(\\pi_\theta(\\cdot|s))$$
+$$\mathcal{L}_\pi = -\log \pi_\theta(a|s) \cdot A(s,a) - \beta H(\pi_\theta(\cdot|s))$$
 
 The entropy term $H$ (weight $\beta=0.01$) encourages exploration.
 
 **Critic loss** (minimise Bellman residual):
-$$\\mathcal{L}_V = (r + \\gamma V_\\phi(s') - V_\\phi(s))^2$$
+$$\mathcal{L}_V = (r + \gamma V_\phi(s') - V_\phi(s))^2$$
 
 ---
 

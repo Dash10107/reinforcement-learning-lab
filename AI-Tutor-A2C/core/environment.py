@@ -13,9 +13,8 @@ Dynamics:
 """
 
 from __future__ import annotations
-
-import gymnasium as gym
 import numpy as np
+import gymnasium as gym
 from gymnasium import spaces
 
 SUBJECTS = [
@@ -26,7 +25,7 @@ SUBJECTS = [
     "Computer Science",
 ]
 SUBJECT_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ec4899", "#3b82f6"]
-SUBJECT_ICONS = ["∑", "⚛", "📖", "🏛", "</>"]
+SUBJECT_ICONS  = ["∑", "⚛", "📖", "🏛", "</>" ]
 
 N_SUBJECTS = len(SUBJECTS)
 
@@ -39,7 +38,7 @@ class AITutorEnv(gym.Env):
     Action space:      Discrete(N)  — which subject to study
     """
 
-    metadata = {"render_modes": []}  # noqa: RUF012
+    metadata = {"render_modes": []}
 
     def __init__(self, n_subjects: int = N_SUBJECTS):
         super().__init__()
@@ -50,7 +49,7 @@ class AITutorEnv(gym.Env):
         self.action_space = spaces.Discrete(n_subjects)
         self.state = np.zeros(n_subjects, dtype=np.float32)
         self.step_count = 0
-        self.max_steps = 200  # hard cap prevents infinite episodes
+        self.max_steps = 200   # hard cap prevents infinite episodes
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         super().reset(seed=seed)
@@ -71,7 +70,7 @@ class AITutorEnv(gym.Env):
         decay[action] = 0.0
         self.state = np.maximum(0.0, self.state - decay)
 
-        reward = float(self.state[action])  # reward = current mastery
+        reward = float(self.state[action])                    # reward = current mastery
         mastered = bool(np.all(self.state >= 0.98))
         truncated = self.step_count >= self.max_steps
         done = mastered

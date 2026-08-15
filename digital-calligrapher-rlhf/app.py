@@ -11,39 +11,29 @@ pressure, curvature, length, and randomness.
 """
 
 import io
-
+import numpy as np
 import gradio as gr
 import matplotlib
-import numpy as np
-
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from PIL import Image
 from scipy.interpolate import make_interp_spline
+from PIL import Image
 
 # ── Ink palette ───────────────────────────────────────────────────────────────
 
 INK_STYLES = {
-    "Sumi Ink": {"stroke": "#1a1a1a", "bg": "#f4f1ea", "accent": "#2d3436"},
+    "Sumi Ink":   {"stroke": "#1a1a1a", "bg": "#f4f1ea", "accent": "#2d3436"},
     "Vermillion": {"stroke": "#c0392b", "bg": "#fdf6f0", "accent": "#922b21"},
-    "Indigo": {"stroke": "#1a3a5c", "bg": "#f0f4f8", "accent": "#0d2137"},
-    "Gold": {"stroke": "#b7860b", "bg": "#fdf9f0", "accent": "#8a6509"},
-    "Jade": {"stroke": "#1a6b3c", "bg": "#f0fdf4", "accent": "#0f4a28"},
-    "Charcoal": {"stroke": "#4a4a4a", "bg": "#f8f7f5", "accent": "#2a2a2a"},
-    "Midnight": {"stroke": "#2c3e50", "bg": "#f5f6fa", "accent": "#1a252f"},
+    "Indigo":     {"stroke": "#1a3a5c", "bg": "#f0f4f8", "accent": "#0d2137"},
+    "Gold":       {"stroke": "#b7860b", "bg": "#fdf9f0", "accent": "#8a6509"},
+    "Jade":       {"stroke": "#1a6b3c", "bg": "#f0fdf4", "accent": "#0f4a28"},
+    "Charcoal":   {"stroke": "#4a4a4a", "bg": "#f8f7f5", "accent": "#2a2a2a"},
+    "Midnight":   {"stroke": "#2c3e50", "bg": "#f5f6fa", "accent": "#1a252f"},
 }
 
-FEATURE_NAMES = [
-    "Complexity",
-    "Smoothness",
-    "Pressure",
-    "Curvature",
-    "Length",
-    "Randomness",
-]
+FEATURE_NAMES = ["Complexity", "Smoothness", "Pressure", "Curvature", "Length", "Randomness"]
 
 # ── RLHF Reward Model ─────────────────────────────────────────────────────────
-
 
 class RewardModel:
     """
@@ -53,9 +43,9 @@ class RewardModel:
     """
 
     def __init__(self, feature_dim: int = 6, lr: float = 0.4):
-        self.weights = np.zeros(feature_dim)
-        self.lr = lr
-        self.vote_count = 0
+        self.weights     = np.zeros(feature_dim)
+        self.lr          = lr
+        self.vote_count  = 0
         self.loss_history: list[float] = []
         self.weight_history: list[np.ndarray] = []
 
@@ -63,10 +53,10 @@ class RewardModel:
         return float(np.dot(features, self.weights))
 
     def update(self, preferred: np.ndarray, rejected: np.ndarray):
-        diff = self.score(preferred) - self.score(rejected)
-        p_wrong = 1.0 / (1.0 + np.exp(diff))  # sigmoid(-diff)
-        loss = -np.log(1.0 / (1.0 + np.exp(-diff)) + 1e-10)
-        gradient = p_wrong * (preferred - rejected)
+        diff        = self.score(preferred) - self.score(rejected)
+        p_wrong     = 1.0 / (1.0 + np.exp(diff))          # sigmoid(-diff)
+        loss        = -np.log(1.0 / (1.0 + np.exp(-diff)) + 1e-10)
+        gradient    = p_wrong * (preferred - rejected)
         self.weights += self.lr * gradient
         self.vote_count += 1
         self.loss_history.append(float(loss))
@@ -77,38 +67,35 @@ class RewardModel:
         """Pseudo-confidence: how much the model has converged (0-100%)."""
         if self.vote_count < 2:
             return 0.0
-        recent = self.loss_history[-min(10, len(self.loss_history)) :]
+        recent = self.loss_history[-min(10, len(self.loss_history)):]
         spread = np.std(recent)
-        return float(
-            np.clip(100 * (1 - spread / (np.mean(np.abs(recent)) + 1e-8)), 0, 100)
-        )
+        return float(np.clip(100 * (1 - spread / (np.mean(np.abs(recent)) + 1e-8)), 0, 100))
 
     def optimal_params(self, n_restarts: int = 500) -> np.ndarray:
         """
         Random-restart hill climbing to find features that maximise learned reward.
         This is the real optimisation — not just weight clipping.
         """
-        best_score = -np.inf
-        best_params = np.random.rand(6)
+        best_score   = -np.inf
+        best_params  = np.random.rand(6)
 
         for _ in range(n_restarts):
             candidate = np.random.rand(6)
             s = self.score(candidate)
             if s > best_score:
-                best_score = s
+                best_score  = s
                 best_params = candidate.copy()
 
         # Fine-tune with gradient ascent
         params = best_params.copy()
         for _ in range(200):
-            grad = self.weights  # gradient of linear reward
+            grad   = self.weights                    # gradient of linear reward
             params = np.clip(params + 0.01 * grad, 0, 1)
 
         return np.clip(params, 0, 1)
 
 
 # ── Stroke generation ─────────────────────────────────────────────────────────
-
 
 def generate_stroke(params: np.ndarray, seed: int | None = None) -> tuple:
     """
@@ -127,27 +114,25 @@ def generate_stroke(params: np.ndarray, seed: int | None = None) -> tuple:
     """
     rng = np.random.default_rng(seed)
 
-    complexity = int(3 + params[0] * 7)  # 3-10 control points
-    smoothness = int(2 + params[1] * 2)  # spline degree 2-4
-    peak = 1.0 + params[2] * 4.5  # max linewidth 1-5.5
-    curvature = params[3] * 2.2  # y-offset amplitude
-    length = 0.3 + params[4] * 0.7  # horizontal span 0.3-1.0
-    randomness = params[5] * 0.15  # point jitter magnitude
+    complexity  = int(3 + params[0] * 7)     # 3-10 control points
+    smoothness  = int(2 + params[1] * 2)      # spline degree 2-4
+    peak        = 1.0 + params[2] * 4.5       # max linewidth 1-5.5
+    curvature   = params[3] * 2.2             # y-offset amplitude
+    length      = 0.3 + params[4] * 0.7       # horizontal span 0.3-1.0
+    randomness  = params[5] * 0.15            # point jitter magnitude
 
-    k = min(smoothness, complexity - 1)  # degree must be < n_points
+    k = min(smoothness, complexity - 1)       # degree must be < n_points
 
     # Control points
     t = np.linspace(0, 1, complexity)
-    x = np.linspace(0, length, complexity) + rng.uniform(
-        -randomness, randomness, complexity
-    )
-    y = rng.uniform(0.3, 0.7, complexity)  # base midline
+    x = np.linspace(0, length, complexity) + rng.uniform(-randomness, randomness, complexity)
+    y = rng.uniform(0.3, 0.7, complexity)     # base midline
     y += np.sin(x / length * np.pi) * curvature
     y += rng.uniform(-randomness, randomness, complexity)
 
     # Sort by x for monotone interpolation
     order = np.argsort(x)
-    x, y = x[order], y[order]
+    x, y  = x[order], y[order]
 
     # Deduplicate x (required for spline)
     _, unique = np.unique(x, return_index=True)
@@ -158,7 +143,7 @@ def generate_stroke(params: np.ndarray, seed: int | None = None) -> tuple:
         t_dense = np.linspace(0, t_u[-1], 200)
         sx = make_interp_spline(t_u, x, k=k)(t_dense)
         sy = make_interp_spline(t_u, y, k=k)(t_dense)
-    except Exception:  # noqa: BLE001
+    except Exception:
         sx = np.linspace(0, length, 200)
         sy = np.full(200, 0.5)
 
@@ -169,9 +154,7 @@ def generate_stroke(params: np.ndarray, seed: int | None = None) -> tuple:
 
 
 def render_stroke(
-    x: np.ndarray,
-    y: np.ndarray,
-    p: np.ndarray,
+    x: np.ndarray, y: np.ndarray, p: np.ndarray,
     ink: dict,
     figsize: float = 5,
     dpi: int = 110,
@@ -181,23 +164,17 @@ def render_stroke(
     ax.set_facecolor(ink["bg"])
 
     for i in range(len(x) - 1):
-        ax.plot(
-            x[i : i + 2],
-            y[i : i + 2],
-            color=ink["stroke"],
-            linewidth=p[i],
-            solid_capstyle="round",
-            alpha=0.88,
-        )
+        ax.plot(x[i:i+2], y[i:i+2],
+                color=ink["stroke"], linewidth=p[i],
+                solid_capstyle="round", alpha=0.88)
 
     ax.set_xlim(-0.1, 1.15)
     ax.set_ylim(-0.3, 1.3)
     ax.axis("off")
 
     buf = io.BytesIO()
-    fig.savefig(
-        buf, format="png", facecolor=ink["bg"], bbox_inches="tight", pad_inches=0.05
-    )
+    fig.savefig(buf, format="png", facecolor=ink["bg"],
+                bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
     buf.seek(0)
     return Image.open(buf).copy()
@@ -214,10 +191,10 @@ def render_comparison_pair(
 # ── Analytics charts ──────────────────────────────────────────────────────────
 
 PARCHMENT = "#f4f1ea"
-INK_DARK = "#2d3436"
-MUTED = "#9b9080"
+INK_DARK  = "#2d3436"
+MUTED     = "#9b9080"
 WARM_GREEN = "#1D9E75"
-WARM_RED = "#c0392b"
+WARM_RED   = "#c0392b"
 
 
 def _ax_style(ax):
@@ -235,17 +212,9 @@ def make_learning_curve(model: RewardModel) -> Image.Image:
     _ax_style(ax)
 
     if len(model.loss_history) < 2:
-        ax.text(
-            0.5,
-            0.5,
-            "Cast more votes to see the learning curve",
-            ha="center",
-            va="center",
-            color=MUTED,
-            fontsize=11,
-            style="italic",
-            transform=ax.transAxes,
-        )
+        ax.text(0.5, 0.5, "Cast more votes to see the learning curve",
+                ha="center", va="center", color=MUTED,
+                fontsize=11, style="italic", transform=ax.transAxes)
         ax.axis("off")
     else:
         lh = np.array(model.loss_history)
@@ -257,14 +226,8 @@ def make_learning_curve(model: RewardModel) -> Image.Image:
             ax.plot(range(k - 1, len(lh)), smooth, color=INK_DARK, linewidth=2.0)
         ax.set_xlabel("Vote", color=MUTED, fontsize=8)
         ax.set_ylabel("Loss", color=MUTED, fontsize=8)
-        ax.set_title(
-            "Reward Model Learning Curve",
-            color=INK_DARK,
-            fontsize=10,
-            fontfamily="serif",
-            style="italic",
-            pad=8,
-        )
+        ax.set_title("Reward Model Learning Curve", color=INK_DARK,
+                     fontsize=10, fontfamily="serif", style="italic", pad=8)
 
     fig.tight_layout()
     buf = io.BytesIO()
@@ -280,7 +243,8 @@ def make_radar_chart(model: RewardModel) -> Image.Image:
     angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
     angles += angles[:1]
 
-    fig, ax = plt.subplots(figsize=(5, 5), dpi=110, subplot_kw={"polar": True})
+    fig, ax = plt.subplots(figsize=(5, 5), dpi=110,
+                           subplot_kw={"polar": True})
     fig.patch.set_facecolor(PARCHMENT)
     ax.set_facecolor(PARCHMENT)
 
@@ -293,11 +257,7 @@ def make_radar_chart(model: RewardModel) -> Image.Image:
         ax.fill(angles, values, color=INK_DARK, alpha=0.18)
         ax.plot(angles, values, color=INK_DARK, linewidth=2.0)
         for angle, val, name in zip(angles[:-1], w_norm, FEATURE_NAMES):
-            col = (
-                WARM_GREEN
-                if model.weights[FEATURE_NAMES.index(name)] >= 0
-                else WARM_RED
-            )
+            col = WARM_GREEN if model.weights[FEATURE_NAMES.index(name)] >= 0 else WARM_RED
             ax.scatter(angle, val, color=col, s=40, zorder=5)
     else:
         values = [0.5] * (n + 1)
@@ -307,14 +267,8 @@ def make_radar_chart(model: RewardModel) -> Image.Image:
     ax.set_xticklabels(FEATURE_NAMES, color=INK_DARK, fontsize=8.5)
     ax.set_yticklabels([])
     ax.grid(color="#ddd8cc", linewidth=0.6)
-    ax.set_title(
-        "Your Aesthetic Profile",
-        color=INK_DARK,
-        pad=14,
-        fontsize=11,
-        fontfamily="serif",
-        style="italic",
-    )
+    ax.set_title("Your Aesthetic Profile", color=INK_DARK, pad=14,
+                 fontsize=11, fontfamily="serif", style="italic")
     ax.spines["polar"].set_color("#ddd8cc")
 
     fig.tight_layout()
@@ -336,30 +290,17 @@ def make_weight_bar(model: RewardModel) -> Image.Image:
     w = model.weights if model.vote_count > 0 else np.zeros(6)
     colors = [WARM_GREEN if v >= 0 else WARM_RED for v in w]
 
-    bars = ax.barh(
-        labels, w, color=colors, edgecolor=PARCHMENT, linewidth=0.5, alpha=0.8
-    )
+    bars = ax.barh(labels, w, color=colors, edgecolor=PARCHMENT, linewidth=0.5, alpha=0.8)
     ax.axvline(0, color="#ccc8ba", linewidth=1.2)
     for bar, val in zip(bars, w):
-        ax.text(
-            val + (0.01 if val >= 0 else -0.01),
-            bar.get_y() + bar.get_height() / 2,
-            f"{val:+.3f}",
-            va="center",
-            ha="left" if val >= 0 else "right",
-            color=INK_DARK,
-            fontsize=8,
-            fontfamily="monospace",
-        )
+        ax.text(val + (0.01 if val >= 0 else -0.01),
+                bar.get_y() + bar.get_height() / 2,
+                f"{val:+.3f}", va="center",
+                ha="left" if val >= 0 else "right",
+                color=INK_DARK, fontsize=8, fontfamily="monospace")
     ax.set_xlabel("Weight", color=MUTED, fontsize=8)
-    ax.set_title(
-        "Learned Preference Weights",
-        color=INK_DARK,
-        pad=8,
-        fontsize=10,
-        fontfamily="serif",
-        style="italic",
-    )
+    ax.set_title("Learned Preference Weights", color=INK_DARK, pad=8,
+                 fontsize=10, fontfamily="serif", style="italic")
     ax.tick_params(axis="y", colors=INK_DARK, labelsize=8.5)
 
     fig.tight_layout()
@@ -378,11 +319,11 @@ def _initial_state(ink_name: str = "Sumi Ink") -> dict:
     model = RewardModel()
     feat_a, feat_b = np.random.rand(6), np.random.rand(6)
     return {
-        "model": model,
-        "feat_a": feat_a,
-        "feat_b": feat_b,
-        "ink": ink_name,
-        "gallery": [],  # list of PIL Images (max 6)
+        "model":   model,
+        "feat_a":  feat_a,
+        "feat_b":  feat_b,
+        "ink":     ink_name,
+        "gallery": [],      # list of PIL Images (max 6)
     }
 
 
@@ -400,7 +341,7 @@ Cast your first vote to begin shaping your aesthetic profile.
         f"""<div style='display:flex;justify-content:space-between;padding:4px 0;
                 border-bottom:1px dashed #e8e4da;font-size:0.82rem;'>
               <span style='color:#5a5550;'>{n}</span>
-              <span style='color:{"#1D9E75" if v >= 0 else "#c0392b"};
+              <span style='color:{"#1D9E75" if v>=0 else "#c0392b"};
                     font-family:monospace;font-weight:600;'>{v:+.3f}</span>
             </div>"""
         for n, v in zip(FEATURE_NAMES, w)
@@ -416,7 +357,6 @@ Cast your first vote to begin shaping your aesthetic profile.
 
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────
-
 
 def cb_init(state: dict):
     ink = INK_STYLES[state["ink"]]
@@ -435,7 +375,7 @@ def cb_vote(choice: str, state: dict):
     feat_a = np.random.rand(6)
     if model.vote_count >= 3:
         # Exploit: one stroke near the current optimum
-        noise = np.random.normal(0, 0.12, 6)
+        noise  = np.random.normal(0, 0.12, 6)
         feat_b = np.clip(model.weights + noise, 0, 1)
     else:
         feat_b = np.random.rand(6)
@@ -471,10 +411,8 @@ def cb_generate_masterpiece(state: dict):
         msg = "Cast some votes first for a personalised masterpiece!"
     else:
         best_feat = model.optimal_params(n_restarts=600)
-        msg = (
-            f"Optimised for your aesthetic "
-            f"(reward score: {model.score(best_feat):+.3f})"
-        )
+        msg = (f"Optimised for your aesthetic "
+               f"(reward score: {model.score(best_feat):+.3f})")
 
     ink = INK_STYLES[state["ink"]]
     sx, sy, sp = generate_stroke(best_feat, seed=42)
@@ -491,9 +429,9 @@ def cb_generate_masterpiece(state: dict):
 
 def cb_refresh_charts(state: dict):
     model = state["model"]
-    lc = make_learning_curve(model)
+    lc  = make_learning_curve(model)
     rad = make_radar_chart(model)
-    wb = make_weight_bar(model)
+    wb  = make_weight_bar(model)
     return lc, rad, wb
 
 
@@ -504,10 +442,11 @@ def cb_reset(state: dict):
     state["gallery"] = []
     ink = INK_STYLES[state["ink"]]
     img_a, img_b = render_comparison_pair(state["feat_a"], state["feat_b"], ink)
-    empty_lc = make_learning_curve(state["model"])
+    empty_lc  = make_learning_curve(state["model"])
     empty_rad = make_radar_chart(state["model"])
-    empty_wb = make_weight_bar(state["model"])
-    return (img_a, img_b, _status_html(state), empty_lc, empty_rad, empty_wb, state)
+    empty_wb  = make_weight_bar(state["model"])
+    return (img_a, img_b, _status_html(state),
+            empty_lc, empty_rad, empty_wb, state)
 
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
@@ -644,6 +583,7 @@ footer { display:none !important; }
 # ── Build UI ──────────────────────────────────────────────────────────────────
 
 with gr.Blocks(title="Digital Calligrapher") as demo:
+
     _state = gr.State(_initial_state())
 
     gr.HTML("""
@@ -660,10 +600,12 @@ with gr.Blocks(title="Digital Calligrapher") as demo:
     """)
 
     with gr.Tabs():
+
         # ══════════════════════════════════════════════════════════════════
         # Tab 1 — The Studio (pairwise voting)
         # ══════════════════════════════════════════════════════════════════
-        with gr.Tab("✦ The Studio"):  # noqa: SIM117
+        with gr.Tab("✦ The Studio"):
+
             with gr.Row():
                 # ── Left: comparison ──────────────────────────────────────
                 with gr.Column(scale=3):
@@ -681,20 +623,16 @@ with gr.Blocks(title="Digital Calligrapher") as demo:
 
                     with gr.Row():
                         with gr.Column(elem_classes="stroke-card"):
-                            img_a = gr.Image(
-                                show_label=False, interactive=False, height=280
-                            )
+                            img_a = gr.Image(show_label=False, interactive=False,
+                                             height=280)
                             btn_a = gr.Button("Prefer this  ←", variant="primary")
                         with gr.Column(elem_classes="stroke-card"):
-                            img_b = gr.Image(
-                                show_label=False, interactive=False, height=280
-                            )
+                            img_b = gr.Image(show_label=False, interactive=False,
+                                             height=280)
                             btn_b = gr.Button("→  Prefer this", variant="primary")
 
                     with gr.Row():
-                        btn_skip = gr.Button(
-                            "Neither — show new pair", variant="secondary"
-                        )
+                        btn_skip  = gr.Button("Neither — show new pair", variant="secondary")
                         btn_reset = gr.Button("Reset all preferences", variant="stop")
 
                     gr.HTML("<div style='height:0.5rem'></div>")
@@ -722,15 +660,14 @@ with gr.Blocks(title="Digital Calligrapher") as demo:
                         strokes that genuinely maximise your learned preferences.
                     </div>
                     """)
-                    gr.HTML(
-                        "<div style='font-family:\"EB Garamond\",serif;font-size:1rem;color:#5a5550;margin-bottom:0.5rem;font-style:italic;'>Artist Profile</div>"
-                    )
+                    gr.HTML("<div style='font-family:\"EB Garamond\",serif;font-size:1rem;color:#5a5550;margin-bottom:0.5rem;font-style:italic;'>Artist Profile</div>")
                     profile_html = gr.HTML(_status_html(_initial_state()))
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 2 — Masterpiece
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("✦ Masterpiece"):
+
             gr.HTML("""
             <div style='text-align:center;margin-bottom:1.5rem;'>
                 <div style='font-family:"EB Garamond",serif;font-size:1.3rem;color:#1a1a1a;'>
@@ -759,20 +696,18 @@ with gr.Blocks(title="Digital Calligrapher") as demo:
                         <em>The more votes you cast, the more personalised the result.</em>
                     </div>
                     """)
-                    btn_gen = gr.Button("✦ Craft Masterpiece", variant="primary")
-                    gen_status = gr.Markdown(
-                        "*Cast votes in The Studio, then craft your masterpiece.*"
-                    )
+                    btn_gen    = gr.Button("✦ Craft Masterpiece", variant="primary")
+                    gen_status = gr.Markdown("*Cast votes in The Studio, then craft your masterpiece.*")
 
                 with gr.Column(scale=2, elem_classes="stroke-card"):
-                    masterpiece_img = gr.Image(
-                        show_label=False, interactive=False, height=380
-                    )
+                    masterpiece_img = gr.Image(show_label=False, interactive=False,
+                                               height=380)
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 3 — Analytics
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("✦ Analytics"):
+
             gr.HTML("""
             <div style='text-align:center;margin-bottom:1.2rem;'>
                 <div style='font-family:"EB Garamond",serif;font-size:1.3rem;color:#1a1a1a;'>
@@ -787,25 +722,22 @@ with gr.Blocks(title="Digital Calligrapher") as demo:
             btn_refresh = gr.Button("⟳ Refresh Analytics", variant="secondary")
 
             with gr.Row():
-                lc_chart = gr.Image(
-                    label="Learning Curve", show_label=True, interactive=False
-                )
-                wb_chart = gr.Image(
-                    label="Preference Weights", show_label=True, interactive=False
-                )
+                lc_chart  = gr.Image(label="Learning Curve", show_label=True,
+                                     interactive=False)
+                wb_chart  = gr.Image(label="Preference Weights", show_label=True,
+                                     interactive=False)
 
-            radar_chart = gr.Image(
-                label="Aesthetic Radar", show_label=True, interactive=False
-            )
+            radar_chart = gr.Image(label="Aesthetic Radar", show_label=True,
+                                   interactive=False)
 
-            btn_refresh.click(
-                cb_refresh_charts, [_state], [lc_chart, radar_chart, wb_chart]
-            )
+            btn_refresh.click(cb_refresh_charts, [_state],
+                              [lc_chart, radar_chart, wb_chart])
 
         # ══════════════════════════════════════════════════════════════════
         # Tab 4 — How RLHF Works
         # ══════════════════════════════════════════════════════════════════
         with gr.Tab("✦ How It Works"):
+
             gr.Markdown("""
 ## The Mathematics of Aesthetic Learning
 
@@ -900,25 +832,21 @@ But this produces degenerate strokes (all parameters at extremes). Instead we:
 
     demo.load(cb_init, [_state], [img_a, img_b, profile_html, _state])
 
-    btn_a.click(
-        lambda s: cb_vote("A", s), [_state], [img_a, img_b, profile_html, _state]
-    )
-    btn_b.click(
-        lambda s: cb_vote("B", s), [_state], [img_a, img_b, profile_html, _state]
-    )
+    btn_a.click(lambda s: cb_vote("A", s), [_state],
+                [img_a, img_b, profile_html, _state])
+    btn_b.click(lambda s: cb_vote("B", s), [_state],
+                [img_a, img_b, profile_html, _state])
     btn_skip.click(cb_skip, [_state], [img_a, img_b, _state])
 
-    ink_selector.change(cb_change_ink, [ink_selector, _state], [img_a, img_b, _state])
+    ink_selector.change(cb_change_ink, [ink_selector, _state],
+                        [img_a, img_b, _state])
 
-    btn_gen.click(
-        cb_generate_masterpiece, [_state], [masterpiece_img, gen_status, _state]
-    )
+    btn_gen.click(cb_generate_masterpiece, [_state],
+                  [masterpiece_img, gen_status, _state])
 
-    btn_reset.click(
-        cb_reset,
-        [_state],
-        [img_a, img_b, profile_html, lc_chart, radar_chart, wb_chart, _state],
-    )
+    btn_reset.click(cb_reset, [_state],
+                    [img_a, img_b, profile_html,
+                     lc_chart, radar_chart, wb_chart, _state])
 
 
 if __name__ == "__main__":

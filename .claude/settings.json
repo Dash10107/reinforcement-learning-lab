@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/c/Users/daksh/OneDrive/Desktop/ReinforcementLearning/**)",
+      "Bash(python -c \"import mpe2, torch, pettingzoo; print\\('deps ok'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(unzip -l sac_rocket_lander.zip)",
+      "Bash(unzip -p sac_rocket_lander.zip data)",
+      "Bash(python -c \"import gradio; print\\(gradio.__version__\\)\")",
+      "Bash(git commit -m ' *)",
+      "Bash(echo '__pycache__/ *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git remote *)",
+      "Bash(python -c \"import app; print\\('OK'\\)\")",
+      "Bash(python -c \"from maze.generator import generate_dfs_maze; from maze.env import MazeEnv; from agents.qlearning import train_qlearning; from viz.renderer import make_solution_gif, make_training_chart, make_qvalue_heatmap; import os; grid=generate_dfs_maze\\(7,seed=42\\); env=MazeEnv\\(grid\\); agent,rewards=train_qlearning\\(env,200,0.1,0.95,0.995,seed=42\\); gif=make_solution_gif\\(MazeEnv\\(grid\\),agent,fps=7\\); make_training_chart\\({'Q-Learning':rewards}\\); make_qvalue_heatmap\\(MazeEnv\\(grid\\),agent\\); print\\('PASS gif=',os.path.getsize\\(gif\\)\\)\")",
+      "Bash(python -W ignore -c \"import app; print\\('app import OK'\\)\")",
+      "Bash(python -W ignore -c ' *)"
+    ]
+  }
+}

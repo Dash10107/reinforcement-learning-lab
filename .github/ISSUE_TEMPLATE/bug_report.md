@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve the Reinforcement Learning Portfolio
+about: Create a report to help us improve the Reinforcement Learning Lab
 title: "[BUG] "
 labels: bug
 assignees: ''

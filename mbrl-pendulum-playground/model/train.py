@@ -4,16 +4,14 @@ Runs in a background thread; progress written to TrainingState.
 """
 
 from __future__ import annotations
-
 import threading
-from dataclasses import dataclass, field
-
-import gymnasium as gym
 import numpy as np
 import torch
-from torch import nn
+import torch.nn as nn
+import gymnasium as gym
+from dataclasses import dataclass, field
 
-from model.dynamics import EnsembleDynamics
+from model.dynamics import EnsembleDynamics, STATE_DIM, ACTION_DIM
 
 ENSEMBLE_PATH = "ensemble_dynamics.pt"
 
@@ -21,7 +19,7 @@ ENSEMBLE_PATH = "ensemble_dynamics.pt"
 @dataclass
 class TrainingState:
     running: bool = False
-    phase: str = "idle"  # "collecting" | "training" | "done" | "idle"
+    phase: str = "idle"       # "collecting" | "training" | "done" | "idle"
     n_transitions: int = 0
     epoch: int = 0
     total_epochs: int = 0
@@ -89,8 +87,8 @@ def train_ensemble(
     n_val = max(1, int(N * val_frac))
     val_idx, train_idx = idx[:n_val], idx[n_val:]
 
-    S = torch.FloatTensor(states)
-    A = torch.FloatTensor(actions)
+    S  = torch.FloatTensor(states)
+    A  = torch.FloatTensor(actions)
     S_ = torch.FloatTensor(next_states)
 
     if train_state:
@@ -106,9 +104,9 @@ def train_ensemble(
         n_batches = 0
 
         for start in range(0, len(train_idx), batch_size):
-            bi = train_idx[perm[start : start + batch_size]]
-            s_b = S[bi]
-            a_b = A[bi]
+            bi = train_idx[perm[start:start + batch_size]]
+            s_b  = S[bi]
+            a_b  = A[bi]
             s_b_ = S_[bi]
 
             optimizer.zero_grad()
@@ -129,8 +127,8 @@ def train_ensemble(
 
         # Validation
         with torch.no_grad():
-            s_v = S[val_idx]
-            a_v = A[val_idx]
+            s_v  = S[val_idx]
+            a_v  = A[val_idx]
             s_v_ = S_[val_idx]
             v_preds, _ = ensemble.forward_all(s_v, a_v)
             val_loss = criterion(v_preds, s_v_).item()
@@ -142,7 +140,7 @@ def train_ensemble(
             train_state.train_losses.append(train_l)
             train_state.val_losses.append(val_loss)
             train_state.status = (
-                f"Epoch {ep + 1}/{epochs}  |  "
+                f"Epoch {ep+1}/{epochs}  |  "
                 f"Train MSE: {train_l:.5f}  |  Val MSE: {val_loss:.5f}"
             )
 

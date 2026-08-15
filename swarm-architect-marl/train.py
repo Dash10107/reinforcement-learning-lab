@@ -8,10 +8,10 @@ import argparse
 import os
 import time
 
+from config import ENV, PPO, NET, TRAIN
 from agents.ippo import IPPOTrainer
-from config import ENV, NET, PPO, TRAIN
-from environment.wrapper import get_agent_ids, make_env
-from evaluation.metrics import TrainingLog
+from environment.wrapper import make_env, get_agent_ids
+from evaluation.metrics import TrainingLog, evaluate_agents
 
 
 def train(

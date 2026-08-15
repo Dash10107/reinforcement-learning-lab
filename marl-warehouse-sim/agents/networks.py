@@ -1,18 +1,15 @@
 from __future__ import annotations
-
-import numpy as np
 import torch
-from torch import nn
+import torch.nn as nn
+import numpy as np
 
 
 class Actor(nn.Module):
     def __init__(self, obs_dim: int, n_actions: int, hidden: int = 128):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(obs_dim, hidden),
-            nn.Tanh(),
-            nn.Linear(hidden, hidden),
-            nn.Tanh(),
+            nn.Linear(obs_dim, hidden), nn.Tanh(),
+            nn.Linear(hidden, hidden), nn.Tanh(),
             nn.Linear(hidden, n_actions),
         )
 
@@ -38,10 +35,8 @@ class Critic(nn.Module):
     def __init__(self, obs_dim: int, hidden: int = 128):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(obs_dim, hidden),
-            nn.Tanh(),
-            nn.Linear(hidden, hidden),
-            nn.Tanh(),
+            nn.Linear(obs_dim, hidden), nn.Tanh(),
+            nn.Linear(hidden, hidden), nn.Tanh(),
             nn.Linear(hidden, 1),
         )
 

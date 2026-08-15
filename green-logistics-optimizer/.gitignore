@@ -1,0 +1,3 @@
+__pycache__/
+*.pyc
+green_dqn_model.zip
