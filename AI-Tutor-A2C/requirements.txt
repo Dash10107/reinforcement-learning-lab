@@ -1,5 +1,5 @@
 gymnasium
 numpy
 stable-baselines3
-gradio>=6.0.0
+gradio>=6.24.0
 matplotlib
